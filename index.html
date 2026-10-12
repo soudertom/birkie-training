@@ -123,7 +123,10 @@
     <!-- TAB 4: SESSION LOG -->
     <div id="tab-log" class="space-y-4 hidden">
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
-        <h2 class="text-sm font-bold text-highlight">📖 Cloud History</h2>
+        <div class="flex justify-between items-center">
+          <h2 class="text-sm font-bold text-highlight">📖 Cloud History</h2>
+          <button onclick="loadCloudLogs()" class="text-[10px] bg-gray-800 text-accent px-2 py-1 rounded hover:bg-gray-700 font-bold">🔄 Refresh</button>
+        </div>
         <div id="completed-log-list" class="space-y-2 max-h-[28rem] overflow-y-auto pr-1"></div>
       </div>
     </div>
@@ -134,7 +137,6 @@
     const SUPABASE_URL = 'https://crtvkqpaajyfubdrofwx.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_VM-b9PU3kKoGwbjF8w2qxQ_ujdrkuSU';
 
-    // INSTANT EMBEDDED SHEET 2 MOVEMENT LIBRARY
     const EXERCISE_DB = [
       { id: 'p1', name: 'Flat Dumbbell Press', category: 'push', equipment: 'Dumbbell', focus: 'Chest & Triceps', default_sets: 4, default_reps: '8–12', default_wt: 52.5 },
       { id: 'p2', name: 'Incline Dumbbell Fly', category: 'push', equipment: 'Dumbbell', focus: 'Upper Chest Isolation', default_sets: 4, default_reps: '8–12', default_wt: 30 },
@@ -169,33 +171,36 @@
 
     async function loadCloudLogs() {
       const container = document.getElementById('completed-log-list');
+      container.innerHTML = `<p class="text-xs text-gray-500">Syncing with cloud...</p>`;
+      
       try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/birkie_workout_logs?select=*&order=logged_at.desc`, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/birkie_workout_logs?select=*`, {
           headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
         });
+        
         if (res.ok) {
           cloudLogsCache = await res.json();
-          if (cloudLogsCache.length === 0) {
+          if (!cloudLogsCache || cloudLogsCache.length === 0) {
             container.innerHTML = `<p class="text-xs text-gray-500">No cloud logs recorded yet.</p>`;
           } else {
             container.innerHTML = cloudLogsCache.map(h => `
               <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1.5 text-xs">
                 <div class="flex justify-between items-center">
-                  <span class="font-bold text-accent">${h.split_category} — ${h.rowing_mins > 0 ? `+ ${h.rowing_mins}m Row` : 'Strength Only'}</span>
-                  <span class="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded">${h.logged_at.split('T')[0]}</span>
+                  <span class="font-bold text-accent">${h.split_category || 'WORKOUT'} — ${h.rowing_mins > 0 ? `+ ${h.rowing_mins}m Row` : 'Strength Only'}</span>
+                  <span class="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded">${h.logged_at ? h.logged_at.split('T')[0] : 'Recent'}</span>
                 </div>
                 <div class="text-[11px] text-gray-300 space-y-0.5 pt-1">
-                  ${h.performances.map(p => `<div>• ${p.name}: <b>${p.sets}x${p.reps} @${p.weight}lbs</b></div>`).join('')}
+                  ${Array.isArray(h.performances) ? h.performances.map(p => `<div>• ${p.name}: <b>${p.sets}x${p.reps} @${p.weight}lbs</b></div>`).join('') : '<div>Performance details logged</div>'}
                 </div>
               </div>
             `).join('');
           }
           generateAICoachInsights(cloudLogsCache);
         } else {
-          container.innerHTML = `<p class="text-xs text-red-400">Failed to fetch cloud logs.</p>`;
+          container.innerHTML = `<p class="text-xs text-red-400">Failed to fetch cloud logs (Status ${res.status}).</p>`;
         }
       } catch (e) {
-        container.innerHTML = `<p class="text-xs text-red-400">Cloud network error.</p>`;
+        container.innerHTML = `<p class="text-xs text-red-400">Network error connecting to Supabase.</p>`;
       }
     }
 
@@ -213,12 +218,14 @@
       let maxWeightLifted = 0;
       let heaviestMovement = "";
       logs.forEach(l => {
-        l.performances.forEach(p => {
-          if (p.weight > maxWeightLifted) {
-            maxWeightLifted = p.weight;
-            heaviestMovement = p.name;
-          }
-        });
+        if (Array.isArray(l.performances)) {
+          l.performances.forEach(p => {
+            if (p.weight > maxWeightLifted) {
+              maxWeightLifted = p.weight;
+              heaviestMovement = p.name;
+            }
+          });
+        }
       });
 
       coachContainer.innerHTML = `
@@ -234,7 +241,7 @@
 
         <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1">
           <div class="font-bold text-accent">🎯 AI Coach Recommendation</div>
-          <p class="text-gray-300 text-[11px]">Last session was <b>${lastWorkout.split_category}</b>. Aim for progressive overload today by bumping weight or reps.</p>
+          <p class="text-gray-300 text-[11px]">Last logged session was <b>${lastWorkout.split_category}</b>. Aim for progressive overload today by bumping weight or reps.</p>
         </div>
       `;
     }
