@@ -21,7 +21,7 @@
   <!-- Header -->
   <header class="p-4 bg-cardbg border-b border-gray-800 sticky top-0 z-50 text-center">
     <h1 class="text-xl font-bold text-accent">🎿 Birkie Training Commander</h1>
-    <p class="text-xs text-gray-400">Sheet 2 Splits + Cloud AI Coach</p>
+    <p class="text-xs text-gray-400">Smart Split Rotation + Dual Core Engine</p>
   </header>
 
   <!-- Navigation Tabs -->
@@ -33,6 +33,18 @@
   </nav>
 
   <main class="p-4 max-w-md mx-auto space-y-4">
+
+    <!-- SMART SUGGESTION BANNER (SUN-SUN ROTATION) -->
+    <div id="smart-suggestion-banner" class="bg-blue-950/60 border border-blue-900/60 p-3 rounded-xl space-y-1.5 hidden">
+      <div class="flex justify-between items-center">
+        <span class="text-xs font-bold text-accent">💡 Smart Split Recommendation</span>
+        <span id="suggestion-badge" class="text-[10px] bg-accent text-white px-2 py-0.5 rounded font-bold">Sun-Sun Cycle</span>
+      </div>
+      <p id="suggestion-text" class="text-[11px] text-gray-300">Calculating weekly frequency...</p>
+      <button onclick="applySmartSuggestion()" class="w-full bg-accent/20 hover:bg-accent/30 text-accent font-bold py-1.5 rounded text-xs border border-accent/40 transition mt-1">
+        Apply Suggested Split 🚀
+      </button>
+    </div>
 
     <!-- TAB 1: WORKOUT GENERATOR -->
     <div id="tab-generator" class="space-y-4">
@@ -71,7 +83,7 @@
       <div id="active-workout-card" class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3 hidden">
         <div class="flex justify-between items-center border-b border-gray-800 pb-2">
           <h3 id="generated-title" class="text-sm font-bold text-accent">Session Breakdown</h3>
-          <span id="generated-count" class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-highlight">45m + 5m Core</span>
+          <span id="generated-count" class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-highlight">45m + Dual Core</span>
         </div>
 
         <div id="exercise-list" class="space-y-3"></div>
@@ -160,9 +172,10 @@
     ];
 
     let userPrefs = JSON.parse(localStorage.getItem('birkie_exercise_prefs') || '{"favorites":[],"blacklist":[]}');
-    let currentWorkout = { strength: [], core: null, rowingTime: 0 };
+    let currentWorkout = { strength: [], core: [], rowingTime: 0 };
     let currentLibFilter = 'all';
     let cloudLogsCache = [];
+    let suggestedSplit = 'push';
 
     async function initApp() {
       renderLibrary();
@@ -174,14 +187,14 @@
       container.innerHTML = `<p class="text-xs text-gray-500">Syncing with cloud...</p>`;
       
       try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/birkie_workout_logs?select=*`, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/birkie_workout_logs?select=*&order=logged_at.desc`, {
           headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
         });
         
         if (res.ok) {
           cloudLogsCache = await res.json();
           if (!cloudLogsCache || cloudLogsCache.length === 0) {
-            container.innerHTML = `<p class="text-xs text-gray-500">No cloud logs recorded yet.</p>`;
+            container.innerHTML = `<p class="text-xs text-gray-500">No cloud logs recorded yet.</p>';
           } else {
             container.innerHTML = cloudLogsCache.map(h => `
               <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1.5 text-xs">
@@ -196,12 +209,56 @@
             `).join('');
           }
           generateAICoachInsights(cloudLogsCache);
+          calculateSundayToSundaySuggestion(cloudLogsCache);
         } else {
           container.innerHTML = `<p class="text-xs text-red-400">Failed to fetch cloud logs (Status ${res.status}).</p>`;
         }
       } catch (e) {
         container.innerHTML = `<p class="text-xs text-red-400">Network error connecting to Supabase.</p>`;
       }
+    }
+
+    function calculateSundayToSundaySuggestion(logs) {
+      // Find current Sunday start of week
+      const now = new Date();
+      const currentDay = now.getDay(); // 0 is Sunday
+      const sunday = new Date(now);
+      sunday.setDate(now.getDate() - currentDay);
+      sunday.setHours(0, 0, 0, 0);
+
+      // Filter logs from this Sunday onwards
+      const thisWeekLogs = logs.filter(l => new Date(l.logged_at) >= sunday);
+
+      let counts = { PUSH: 0, PULL: 0, LEGS: 0 };
+      thisWeekLogs.forEach(l => {
+        let cat = (l.split_category || '').toUpperCase();
+        if (cat.includes('PUSH')) counts.PUSH++;
+        else if (cat.includes('PULL')) counts.PULL++;
+        else if (cat.includes('LEGS') || cat.includes('LOWER')) counts.LEGS++;
+      });
+
+      // Find lowest count
+      let minVal = Infinity;
+      let lowestSplit = 'push';
+      ['PUSH', 'PULL', 'LEGS'].forEach(split => {
+        if (counts[split] < minVal) {
+          minVal = counts[split];
+          lowestSplit = split.toLowerCase();
+        }
+      });
+
+      suggestedSplit = lowestSplit;
+      const splitNames = { push: 'Push (Chest & Tris)', pull: 'Pull (Back & Bis)', legs: 'Legs (Quads & Hams)' };
+
+      const banner = document.getElementById('smart-suggestion-banner');
+      const text = document.getElementById('suggestion-text');
+      banner.classList.remove('hidden');
+      text.innerHTML = `This week (Sun-Sun): Push (${counts.PUSH}), Pull (${counts.PULL}), Legs (${counts.LEGS}). <b>Recommended next: ${splitNames[lowestSplit]}</b>`;
+    }
+
+    function applySmartSuggestion() {
+      document.getElementById('workout-focus').value = suggestedSplit;
+      generateWorkout();
     }
 
     function generateAICoachInsights(logs) {
@@ -241,7 +298,7 @@
 
         <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1">
           <div class="font-bold text-accent">🎯 AI Coach Recommendation</div>
-          <p class="text-gray-300 text-[11px]">Last logged session was <b>${lastWorkout.split_category}</b>. Aim for progressive overload today by bumping weight or reps.</p>
+          <p class="text-gray-300 text-[11px]">Last logged session was <b>${lastWorkout.split_category}</b>. Follow the smart rotation banner above to balance your weekly volume.</p>
         </div>
       `;
     }
@@ -291,12 +348,17 @@
         if (!selectedStrength.some(s => s.id === ex.id)) selectedStrength.push(ex);
       }
 
+      // Pick 2 DEDICATED CORE movements instead of 1
       let coreCandidates = EXERCISE_DB.filter(e => !userPrefs.blacklist.includes(e.id) && e.category === 'core');
-      const coreEx = coreCandidates[Math.floor(Math.random() * coreCandidates.length)];
+      let selectedCore = [];
+      while (selectedCore.length < Math.min(2, coreCandidates.length)) {
+        const cEx = coreCandidates[Math.floor(Math.random() * coreCandidates.length)];
+        if (!selectedCore.some(s => s.id === cEx.id)) selectedCore.push(cEx);
+      }
 
       currentWorkout = {
         strength: selectedStrength,
-        core: coreEx,
+        core: selectedCore,
         rowingTime: rowingMins
       };
 
@@ -311,7 +373,8 @@
       card.classList.remove('hidden');
       container.innerHTML = '';
 
-      const allExs = [...currentWorkout.strength, currentWorkout.core];
+      // Combine strength + 2 core movements
+      const allExs = [...currentWorkout.strength, ...currentWorkout.core];
       allExs.forEach((ex, index) => {
         const isCore = ex.category === 'core';
         const badge = isCore ? '<span class="text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">5-MIN CORE BLOCK</span>' : `<span class="text-[9px] bg-gray-800 px-1.5 py-0.5 rounded text-gray-400">#${index+1} Exercise</span>`;
@@ -345,7 +408,7 @@
     }
 
     async function saveCompletedWorkout() {
-      const allExs = [...currentWorkout.strength, currentWorkout.core];
+      const allExs = [...currentWorkout.strength, ...currentWorkout.core];
       const performances = allExs.map(ex => ({
         name: ex.name,
         sets: parseInt(document.getElementById(`sets-${ex.id}`).value) || 3,
