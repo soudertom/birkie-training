@@ -21,7 +21,7 @@
   <!-- Header -->
   <header class="p-4 bg-cardbg border-b border-gray-800 sticky top-0 z-50 text-center">
     <h1 class="text-xl font-bold text-accent">🎿 Birkie Training Commander</h1>
-    <p class="text-xs text-gray-400">Smart Split Rotation + Dual Core Engine</p>
+    <p class="text-xs text-gray-400">Interactive Circuit + Dual Core + Cloud Sync</p>
   </header>
 
   <!-- Navigation Tabs -->
@@ -34,22 +34,22 @@
 
   <main class="p-4 max-w-md mx-auto space-y-4">
 
-    <!-- TAB 1: WORKOUT GENERATOR -->
+    <!-- TAB 1: WORKOUT GENERATOR & ACTIVE CIRCUIT -->
     <div id="tab-generator" class="space-y-4">
 
-      <!-- SMART SUGGESTION BANNER (SUN-SUN ROTATION) -->
+      <!-- SMART SUGGESTION BANNER -->
       <div id="smart-suggestion-banner" class="bg-blue-950/60 border border-blue-900/60 p-3 rounded-xl space-y-1.5">
         <div class="flex justify-between items-center">
           <span class="text-xs font-bold text-accent">💡 Smart Split Recommendation</span>
           <span class="text-[10px] bg-accent text-white px-2 py-0.5 rounded font-bold">Sun-Sun Cycle</span>
         </div>
-        <p id="suggestion-text" class="text-[11px] text-gray-300">Checking weekly training frequency...</p>
+        <p id="suggestion-text" class="text-[11px] text-gray-300">Checking weekly frequency...</p>
         <button onclick="applySmartSuggestion()" class="w-full bg-accent/20 hover:bg-accent/30 text-accent font-bold py-1.5 rounded text-xs border border-accent/40 transition mt-1">
           Apply Suggested Split 🚀
         </button>
       </div>
 
-      <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
+      <div id="generator-controls" class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
         <div class="flex justify-between items-center">
           <h2 class="text-sm font-bold text-highlight">⚙️ Build Session</h2>
           <span id="sync-status" class="text-[10px] text-accent">● Cloud Sync Active</span>
@@ -59,81 +59,91 @@
           <div>
             <label class="block text-[11px] text-gray-400 mb-1">Workout Split</label>
             <select id="workout-focus" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-xs text-gray-200 focus:outline-none focus:border-accent">
-              <option value="push">Upper A / Push (Chest, Shoulders, Tris)</option>
-              <option value="pull">Upper B / Pull (Back & Bis)</option>
-              <option value="legs">Lower / Legs (Squat, RDL, Split Squat)</option>
+              <option value="push">Upper A / Push</option>
+              <option value="pull">Upper B / Pull</option>
+              <option value="legs">Lower / Legs</option>
             </select>
           </div>
           <div>
             <label class="block text-[11px] text-gray-400 mb-1">Water Rower Block</label>
             <select id="rowing-time" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-xs text-gray-200 focus:outline-none focus:border-accent">
-              <option value="0">Strength + Core Only (45m)</option>
-              <option value="20">+ 20 Min Row Intervals</option>
+              <option value="0">Strength + Core Only</option>
+              <option value="20">+ 20 Min Row</option>
               <option value="30">+ 30 Min Steady State</option>
-              <option value="45">+ 45 Min Aerobic Row</option>
-              <option value="60">+ 60 Min Long Row</option>
             </select>
           </div>
         </div>
 
         <button onclick="generateWorkout()" class="w-full bg-accent text-white py-2.5 rounded-lg text-xs font-bold shadow hover:bg-blue-600 transition">
-          Generate Session 🚀
+          Generate Circuit Plan 🚀
         </button>
       </div>
 
+      <!-- PRE-SESSION PREVIEW CARD -->
       <div id="active-workout-card" class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3 hidden">
         <div class="flex justify-between items-center border-b border-gray-800 pb-2">
-          <h3 id="generated-title" class="text-sm font-bold text-accent">Session Breakdown</h3>
-          <span id="generated-count" class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-highlight">45m + Dual Core</span>
+          <h3 id="generated-title" class="text-sm font-bold text-accent">Session Ready</h3>
+          <span class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-highlight">4 Exercises + 2 Core</span>
         </div>
 
-        <div id="exercise-list" class="space-y-3"></div>
-        <div id="rowing-prescription" class="space-y-2"></div>
+        <div id="exercise-preview-list" class="space-y-2"></div>
 
-        <button onclick="saveCompletedWorkout()" class="w-full bg-emerald-600 text-white py-2.5 rounded-lg text-xs font-bold shadow hover:bg-emerald-700 transition mt-2">
-          Log Session to Supabase Cloud ✅
+        <button onclick="startInteractiveSession()" class="w-full bg-emerald-600 text-white py-3 rounded-lg text-xs font-bold shadow hover:bg-emerald-700 transition mt-2">
+          Start Session (Step-by-Step) ▶️
         </button>
       </div>
+
+      <!-- LIVE INTERACTIVE CIRCUIT PLAYER (SET BY SET) -->
+      <div id="interactive-player-card" class="bg-cardbg p-5 rounded-xl border border-gray-800 space-y-4 hidden">
+        <div class="flex justify-between items-center border-b border-gray-800 pb-2">
+          <span id="circuit-progress-badge" class="text-[10px] bg-accent/20 text-accent px-2 py-0.5 rounded font-bold">Step 1 of X</span>
+          <button onclick="exitInteractiveSession()" class="text-[10px] text-red-400 bg-red-950/40 px-2 py-0.5 rounded border border-red-900">Abort Session</button>
+        </div>
+
+        <!-- ACTIVE STEP VIEW -->
+        <div id="step-display-area" class="space-y-3 text-center py-2">
+          <!-- Dynamically populated step content -->
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div id="circuit-action-area" class="space-y-2 pt-2">
+          <!-- Dynamically populated buttons (Next Set, Start Rest Timer, etc.) -->
+        </div>
+      </div>
+
     </div>
 
-    <!-- TAB 2: AI COACH & DYNAMIC ANALYTICS -->
+    <!-- TAB 2: AI COACH -->
     <div id="tab-coach" class="space-y-4 hidden">
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
         <div class="flex justify-between items-center">
           <h2 class="text-sm font-bold text-highlight">🤖 AI Performance Coach</h2>
           <button onclick="loadCloudLogs()" class="text-[10px] bg-gray-800 text-accent px-2 py-1 rounded hover:bg-gray-700 font-bold">🔄 Refresh Analysis</button>
         </div>
-        <p class="text-[11px] text-gray-400">Analyzing your Supabase cloud logs for progressive overload and Birkie conditioning:</p>
-        
         <div id="ai-coach-output" class="space-y-3 text-xs">
-          <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 text-gray-400">
-            Loading analytics...
-          </div>
+          <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 text-gray-400">Loading analytics...</div>
         </div>
       </div>
     </div>
 
-    <!-- TAB 3: MOVEMENT DATABASE & PREFERENCES -->
+    <!-- TAB 3: MOVEMENT LIBRARY -->
     <div id="tab-library" class="space-y-4 hidden">
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
         <div class="flex justify-between items-center">
           <h2 class="text-sm font-bold text-highlight">🏋️ Movement Library</h2>
           <span class="text-[10px] text-gray-400">⭐ Favs | 🚫 Blocked</span>
         </div>
-        
         <input type="text" id="db-search" onkeyup="filterLibrary()" placeholder="Search movement..." class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-xs text-gray-200 focus:outline-none focus:border-accent">
-        
         <div class="flex gap-2 text-[11px]">
           <button onclick="setLibraryFilter('all')" id="flt-all" class="flex-1 bg-gray-800 text-accent font-bold py-1.5 rounded border border-gray-700">All</button>
           <button onclick="setLibraryFilter('fav')" id="flt-fav" class="flex-1 bg-gray-900 text-gray-400 font-bold py-1.5 rounded border border-gray-800">⭐ Favs</button>
           <button onclick="setLibraryFilter('black')" id="flt-black" class="flex-1 bg-gray-900 text-gray-400 font-bold py-1.5 rounded border border-gray-800">🚫 Blocked</button>
         </div>
-
         <div id="library-list" class="space-y-2 max-h-[26rem] overflow-y-auto pr-1"></div>
       </div>
     </div>
 
-    <!-- TAB 4: SESSION LOG -->
+    <!-- TAB 4: HISTORY -->
     <div id="tab-log" class="space-y-4 hidden">
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
         <div class="flex justify-between items-center">
@@ -151,30 +161,32 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_VM-b9PU3kKoGwbjF8w2qxQ_ujdrkuSU';
 
     const EXERCISE_DB = [
-      { id: 'p1', name: 'Flat Dumbbell Press', category: 'push', equipment: 'Dumbbell', focus: 'Chest & Triceps', default_sets: 4, default_reps: '8–12', default_wt: 52.5 },
-      { id: 'p2', name: 'Incline Dumbbell Fly', category: 'push', equipment: 'Dumbbell', focus: 'Upper Chest Isolation', default_sets: 4, default_reps: '8–12', default_wt: 30 },
-      { id: 'p3', name: 'Arnold Press', category: 'push', equipment: 'Dumbbell', focus: 'Shoulders & Stability', default_sets: 3, default_reps: '10–12', default_wt: 30 },
-      { id: 'p4', name: 'Dumbbell Kick Back', category: 'push', equipment: 'Dumbbell', focus: 'Triceps Isolation', default_sets: 3, default_reps: '10–12', default_wt: 35 },
-      { id: 'p5', name: 'Lateral Raise', category: 'push', equipment: 'Dumbbell', focus: 'Side Delts', default_sets: 3, default_reps: '12–15', default_wt: 20 },
-      { id: 'p6', name: 'Overhead Tricep Extension', category: 'push', equipment: 'Dumbbell', focus: 'Triceps Long Head', default_sets: 3, default_reps: '10–12', default_wt: 52.5 },
-      { id: 'l1', name: 'One-Arm Dumbbell Row', category: 'pull', equipment: 'Dumbbell', focus: 'Lat Thickness', default_sets: 4, default_reps: '8–12', default_wt: 52.5 },
-      { id: 'l2', name: 'Reverse Row (supinated grip)', category: 'pull', equipment: 'Dumbbell', focus: 'Mid-Back & Biceps', default_sets: 4, default_reps: '8–12', default_wt: 52.5 },
-      { id: 'l3', name: 'Dumbbell Pullover', category: 'pull', equipment: 'Dumbbell', focus: 'Lats & Serratus', default_sets: 3, default_reps: '10–12', default_wt: 52.5 },
-      { id: 'l4', name: 'Dumbbell Curl', category: 'pull', equipment: 'Dumbbell', focus: 'Biceps Isolation', default_sets: 3, default_reps: '10–12', default_wt: 25 },
-      { id: 'l5', name: 'Rear Delt Fly', category: 'pull', equipment: 'Dumbbell', focus: 'Rear Delts & Upper Back', default_sets: 3, default_reps: '12–15', default_wt: 35 },
-      { id: 'l6', name: 'Hammer Curl', category: 'pull', equipment: 'Dumbbell', focus: 'Brachialis & Forearms', default_sets: 3, default_reps: '10–12', default_wt: 35 },
-      { id: 'g1', name: 'Goblet Squat', category: 'legs', equipment: 'Kettlebell', focus: 'Quads & Upper Posture', default_sets: 4, default_reps: '10–12', default_wt: 50 },
-      { id: 'g2', name: 'Dumbbell Romanian Deadlift', category: 'legs', equipment: 'Dumbbell', focus: 'Hamstrings & Glutes', default_sets: 4, default_reps: '8–12', default_wt: 90 },
-      { id: 'g3', name: 'Bulgarian Split Squat', category: 'legs', equipment: 'Dumbbell', focus: 'Unilateral Quads & Glutes', default_sets: 3, default_reps: '8–10', default_wt: 60 },
-      { id: 'g4', name: 'Hip Thrust', category: 'legs', equipment: 'Dumbbell', focus: 'Glute Power', default_sets: 4, default_reps: '10–12', default_wt: 50 },
-      { id: 'g5', name: 'Dumbbell Calf Raise', category: 'legs', equipment: 'Dumbbell', focus: 'Calves', default_sets: 3, default_reps: '15–20', default_wt: 100 },
-      { id: 'c1', name: 'Russian Twist', category: 'core', equipment: 'Dumbbell/Plate', focus: 'Obliques & Core', default_sets: 3, default_reps: '15–20', default_wt: 25 },
-      { id: 'c2', name: 'Leg Raise', category: 'core', equipment: 'Bodyweight', focus: 'Lower Abs', default_sets: 3, default_reps: '10–15', default_wt: 0 }
+      { id: 'p1', name: 'Flat Dumbbell Press', category: 'push', equipment: 'Dumbbell', focus: 'Chest & Triceps', default_sets: 4, default_reps: '10', default_wt: 52.5 },
+      { id: 'p2', name: 'Incline Dumbbell Fly', category: 'push', equipment: 'Dumbbell', focus: 'Upper Chest', default_sets: 4, default_reps: '10', default_wt: 30 },
+      { id: 'p3', name: 'Arnold Press', category: 'push', equipment: 'Dumbbell', focus: 'Shoulders', default_sets: 3, default_reps: '10', default_wt: 30 },
+      { id: 'p4', name: 'Dumbbell Kick Back', category: 'push', equipment: 'Dumbbell', focus: 'Triceps', default_sets: 3, default_reps: '10', default_wt: 35 },
+      { id: 'p5', name: 'Lateral Raise', category: 'push', equipment: 'Dumbbell', focus: 'Side Delts', default_sets: 3, default_reps: '12', default_wt: 20 },
+      { id: 'p6', name: 'Overhead Tricep Extension', category: 'push', equipment: 'Dumbbell', focus: 'Triceps', default_sets: 3, default_reps: '10', default_wt: 52.5 },
+      { id: 'l1', name: 'One-Arm Dumbbell Row', category: 'pull', equipment: 'Dumbbell', focus: 'Lats', default_sets: 4, default_reps: '10', default_wt: 52.5 },
+      { id: 'l2', name: 'Reverse Row (supinated grip)', category: 'pull', equipment: 'Dumbbell', focus: 'Mid-Back', default_sets: 4, default_reps: '10', default_wt: 52.5 },
+      { id: 'l3', name: 'Dumbbell Pullover', category: 'pull', equipment: 'Dumbbell', focus: 'Lats & Serratus', default_sets: 3, default_reps: '12', default_wt: 52.5 },
+      { id: 'l4', name: 'Dumbbell Curl', category: 'pull', equipment: 'Dumbbell', focus: 'Biceps', default_sets: 3, default_reps: '10', default_wt: 25 },
+      { id: 'l5', name: 'Rear Delt Fly', category: 'pull', equipment: 'Dumbbell', focus: 'Rear Delts', default_sets: 3, default_reps: '12', default_wt: 35 },
+      { id: 'l6', name: 'Hammer Curl', category: 'pull', equipment: 'Dumbbell', focus: 'Brachialis', default_sets: 3, default_reps: '10', default_wt: 35 },
+      { id: 'g1', name: 'Goblet Squat', category: 'legs', equipment: 'Kettlebell', focus: 'Quads', default_sets: 4, default_reps: '10', default_wt: 50 },
+      { id: 'g2', name: 'Dumbbell Romanian Deadlift', category: 'legs', equipment: 'Dumbbell', focus: 'Hamstrings', default_sets: 4, default_reps: '10', default_wt: 90 },
+      { id: 'g3', name: 'Bulgarian Split Squat', category: 'legs', equipment: 'Dumbbell', focus: 'Quads / Glutes', default_sets: 3, default_reps: '8', default_wt: 60 },
+      { id: 'g4', name: 'Hip Thrust', category: 'legs', equipment: 'Dumbbell', focus: 'Glutes', default_sets: 4, default_reps: '10', default_wt: 50 },
+      { id: 'g5', name: 'Dumbbell Calf Raise', category: 'legs', equipment: 'Dumbbell', focus: 'Calves', default_sets: 3, default_reps: '15', default_wt: 100 },
+      { id: 'c1', name: 'Russian Twist', category: 'core', equipment: 'Kettlebell', focus: 'Obliques', default_sets: 3, default_reps: '15', default_wt: 25 },
+      { id: 'c2', name: 'Leg Raise', category: 'core', equipment: 'Bodyweight', focus: 'Lower Abs', default_sets: 3, default_reps: '12', default_wt: 0 }
     ];
 
     let userPrefs = JSON.parse(localStorage.getItem('birkie_exercise_prefs') || '{"favorites":[],"blacklist":[]}');
     let currentWorkout = { strength: [], core: [], rowingTime: 0 };
-    let currentLibFilter = 'all';
+    let circuitSteps = [];
+    let currentStepIndex = 0;
+    let timerInterval = null;
     let cloudLogsCache = [];
     let suggestedSplit = 'push';
 
@@ -185,51 +197,39 @@
 
     async function loadCloudLogs() {
       const container = document.getElementById('completed-log-list');
-      if (container) container.innerHTML = `<p class="text-xs text-gray-500">Syncing with cloud...</p>`;
-      
       try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/birkie_workout_logs?select=*&order=logged_at.desc`, {
           headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
         });
-        
         if (res.ok) {
           cloudLogsCache = await res.json();
-          if (!cloudLogsCache || cloudLogsCache.length === 0) {
-            if (container) container.innerHTML = `<p class="text-xs text-gray-500">No cloud logs recorded yet.</p>`;
-          } else {
-            if (container) {
-              container.innerHTML = cloudLogsCache.map(h => `
+          if (container) {
+            container.innerHTML = cloudLogsCache.length === 0 ? `<p class="text-xs text-gray-500">No cloud logs recorded yet.</p>` :
+              cloudLogsCache.map(h => `
                 <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1.5 text-xs">
                   <div class="flex justify-between items-center">
                     <span class="font-bold text-accent">${h.split_category || 'WORKOUT'} — ${h.rowing_mins > 0 ? `+ ${h.rowing_mins}m Row` : 'Strength Only'}</span>
                     <span class="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded">${h.logged_at ? h.logged_at.split('T')[0] : 'Recent'}</span>
                   </div>
                   <div class="text-[11px] text-gray-300 space-y-0.5 pt-1">
-                    ${Array.isArray(h.performances) ? h.performances.map(p => `<div>• ${p.name}: <b>${p.sets}x${p.reps} @${p.weight}lbs</b></div>`).join('') : '<div>Performance details logged</div>'}
+                    ${Array.isArray(h.performances) ? h.performances.map(p => `<div>• ${p.name}: <b>${p.sets}x${p.reps} @${p.weight}lbs</b></div>`).join('') : ''}
                   </div>
                 </div>
               `).join('');
-            }
           }
           generateAICoachInsights(cloudLogsCache);
           calculateSundayToSundaySuggestion(cloudLogsCache);
-        } else {
-          if (container) container.innerHTML = `<p class="text-xs text-red-400">Failed to fetch cloud logs (Status ${res.status}).</p>`;
         }
-      } catch (e) {
-        if (container) container.innerHTML = `<p class="text-xs text-red-400">Network error connecting to Supabase.</p>`;
-      }
+      } catch (e) { console.error(e); }
     }
 
     function calculateSundayToSundaySuggestion(logs) {
       const now = new Date();
-      const currentDay = now.getDay();
       const sunday = new Date(now);
-      sunday.setDate(now.getDate() - currentDay);
+      sunday.setDate(now.getDate() - now.getDay());
       sunday.setHours(0, 0, 0, 0);
 
       const thisWeekLogs = (logs || []).filter(l => new Date(l.logged_at) >= sunday);
-
       let counts = { PUSH: 0, PULL: 0, LEGS: 0 };
       thisWeekLogs.forEach(l => {
         let cat = (l.split_category || '').toUpperCase();
@@ -241,19 +241,13 @@
       let minVal = Infinity;
       let lowestSplit = 'push';
       ['PUSH', 'PULL', 'LEGS'].forEach(split => {
-        if (counts[split] < minVal) {
-          minVal = counts[split];
-          lowestSplit = split.toLowerCase();
-        }
+        if (counts[split] < minVal) { minVal = counts[split]; lowestSplit = split.toLowerCase(); }
       });
 
       suggestedSplit = lowestSplit;
       const splitNames = { push: 'Push (Chest & Tris)', pull: 'Pull (Back & Bis)', legs: 'Legs (Quads & Hams)' };
-
       const text = document.getElementById('suggestion-text');
-      if (text) {
-        text.innerHTML = `This week (Sun-Sun): Push (${counts.PUSH}), Pull (${counts.PULL}), Legs (${counts.LEGS}).<br><b>Recommended next: ${splitNames[lowestSplit]}</b>`;
-      }
+      if (text) text.innerHTML = `This week (Sun-Sun): Push (${counts.PUSH}), Pull (${counts.PULL}), Legs (${counts.LEGS}).<br><b>Recommended next: ${splitNames[lowestSplit]}</b>`;
     }
 
     function applySmartSuggestion() {
@@ -264,72 +258,16 @@
 
     function generateAICoachInsights(logs) {
       const coachContainer = document.getElementById('ai-coach-output');
-      if (!coachContainer) return;
-
-      if (!logs || logs.length === 0) {
-        coachContainer.innerHTML = `<div class="bg-gray-900 p-3 rounded-lg border border-gray-800 text-gray-400">Complete your first workout to unlock AI coaching insights!</div>`;
-        return;
-      }
-
+      if (!coachContainer || !logs || logs.length === 0) return;
       let totalSessions = logs.length;
       let totalRowingMinutes = logs.reduce((acc, l) => acc + (l.rowing_mins || 0), 0);
-      let lastWorkout = logs[0];
-
-      let maxWeightLifted = 0;
-      let heaviestMovement = "";
-      logs.forEach(l => {
-        if (Array.isArray(l.performances)) {
-          l.performances.forEach(p => {
-            if (p.weight > maxWeightLifted) {
-              maxWeightLifted = p.weight;
-              heaviestMovement = p.name;
-            }
-          });
-        }
-      });
 
       coachContainer.innerHTML = `
         <div class="bg-blue-950/40 border border-blue-900/50 p-3 rounded-lg space-y-2">
           <div class="font-bold text-accent">🎿 Nordic Conditioning Status</div>
-          <p class="text-gray-300 text-[11px]">You have logged <b>${totalSessions} sessions</b> in Supabase with a cumulative <b>${totalRowingMinutes} minutes</b> on the water rower.</p>
-        </div>
-
-        <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1">
-          <div class="font-bold text-highlight">💪 Peak Strength Milestone</div>
-          <p class="text-gray-300 text-[11px]">Highest tracked load: <b>${maxWeightLifted} lbs</b> on <b>${heaviestMovement}</b>.</p>
-        </div>
-
-        <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1">
-          <div class="font-bold text-accent">🎯 AI Coach Recommendation</div>
-          <p class="text-gray-300 text-[11px]">Last logged session was <b>${lastWorkout.split_category || 'WORKOUT'}</b>. Follow the smart rotation banner above to balance your weekly volume.</p>
+          <p class="text-gray-300 text-[11px]">Logged <b>${totalSessions} sessions</b> in Supabase with a cumulative <b>${totalRowingMinutes} minutes</b> on the water rower.</p>
         </div>
       `;
-    }
-
-    function savePrefs() {
-      localStorage.setItem('birkie_exercise_prefs', JSON.stringify(userPrefs));
-    }
-
-    function toggleFavorite(id) {
-      if (userPrefs.favorites.includes(id)) {
-        userPrefs.favorites = userPrefs.favorites.filter(x => x !== id);
-      } else {
-        userPrefs.favorites.push(id);
-        userPrefs.blacklist = userPrefs.blacklist.filter(x => x !== id);
-      }
-      savePrefs();
-      renderLibrary();
-    }
-
-    function toggleBlacklist(id) {
-      if (userPrefs.blacklist.includes(id)) {
-        userPrefs.blacklist = userPrefs.blacklist.filter(x => x !== id);
-      } else {
-        userPrefs.blacklist.push(id);
-        userPrefs.favorites = userPrefs.favorites.filter(x => x !== id);
-      }
-      savePrefs();
-      renderLibrary();
     }
 
     function generateWorkout() {
@@ -337,21 +275,12 @@
       const rowingMins = parseInt(document.getElementById('rowing-time').value);
       
       let candidates = EXERCISE_DB.filter(e => !userPrefs.blacklist.includes(e.id) && e.category === focus);
-      if (candidates.length === 0) { alert("No available movements for this split."); return; }
-
-      let weightedPool = [];
-      candidates.forEach(e => {
-        const weight = userPrefs.favorites.includes(e.id) ? 3 : 1;
-        for (let i = 0; i < weight; i++) weightedPool.push(e);
-      });
-
       let selectedStrength = [];
       while (selectedStrength.length < Math.min(4, candidates.length)) {
-        const ex = weightedPool[Math.floor(Math.random() * weightedPool.length)];
+        const ex = candidates[Math.floor(Math.random() * candidates.length)];
         if (!selectedStrength.some(s => s.id === ex.id)) selectedStrength.push(ex);
       }
 
-      // Pick 2 DEDICATED CORE movements
       let coreCandidates = EXERCISE_DB.filter(e => !userPrefs.blacklist.includes(e.id) && e.category === 'core');
       let selectedCore = [];
       while (selectedCore.length < Math.min(2, coreCandidates.length)) {
@@ -359,69 +288,149 @@
         if (!selectedCore.some(s => s.id === cEx.id)) selectedCore.push(cEx);
       }
 
-      currentWorkout = {
-        strength: selectedStrength,
-        core: selectedCore,
-        rowingTime: rowingMins
-      };
+      currentWorkout = { strength: selectedStrength, core: selectedCore, rowingTime: rowingMins };
 
-      renderCurrentWorkout();
+      // Render Preview
+      const previewList = document.getElementById('exercise-preview-list');
+      previewList.innerHTML = [...selectedStrength, ...selectedCore].map((ex, i) => `
+        <div class="bg-gray-900 p-2 rounded border border-gray-800 text-xs flex justify-between">
+          <span><b>#${i+1}</b> ${ex.name}</span>
+          <span class="text-accent">${ex.default_sets} sets x ${ex.default_reps} @ ${ex.default_wt}lbs</span>
+        </div>
+      `).join('');
+
+      document.getElementById('active-workout-card').classList.remove('hidden');
     }
 
-    function renderCurrentWorkout() {
-      const container = document.getElementById('exercise-list');
-      const rowContainer = document.getElementById('rowing-prescription');
-      const card = document.getElementById('active-workout-card');
-      
-      card.classList.remove('hidden');
-      container.innerHTML = '';
-
+    // BUILD CIRCUIT STEPS: Ex1 Set 1 -> Rest 30s -> Ex1 Set 2 -> ... -> 2 Min Row -> Ex2 Set 1 -> ...
+    function startInteractiveSession() {
+      circuitSteps = [];
       const allExs = [...currentWorkout.strength, ...currentWorkout.core];
-      allExs.forEach((ex, index) => {
-        const isCore = ex.category === 'core';
-        const badge = isCore ? '<span class="text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">5-MIN CORE BLOCK</span>' : `<span class="text-[9px] bg-gray-800 px-1.5 py-0.5 rounded text-gray-400">#${index+1} Exercise</span>`;
 
-        container.innerHTML += `
-          <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1.5">
-            <div class="flex justify-between items-center">
-              <span class="font-bold text-xs text-gray-100">${ex.name}</span>
-              ${badge}
-            </div>
-            <div class="text-[11px] text-gray-400">${ex.focus}</div>
-            <div class="grid grid-cols-3 gap-1 pt-1 text-[11px]">
-              <input type="number" id="sets-${ex.id}" value="${ex.default_sets}" placeholder="Sets" class="bg-gray-800 border border-gray-700 rounded p-1 text-center text-gray-200">
-              <input type="text" id="reps-${ex.id}" value="${ex.default_reps}" placeholder="Reps" class="bg-gray-800 border border-gray-700 rounded p-1 text-center text-gray-200">
-              <input type="number" step="0.5" id="wt-${ex.id}" value="${ex.default_wt}" placeholder="Weight" class="bg-gray-800 border border-gray-700 rounded p-1 text-center text-gray-200">
-            </div>
-          </div>
-        `;
+      allExs.forEach((ex, exIdx) => {
+        const sets = ex.default_sets || 3;
+        for (let s = 1; s <= sets; s++) {
+          circuitSteps.push({
+            type: 'exercise',
+            exerciseId: ex.id,
+            name: ex.name,
+            focus: ex.focus,
+            setNum: s,
+            totalSets: sets,
+            reps: ex.default_reps,
+            weight: ex.default_wt
+          });
+
+          // Rest 30 seconds after each set (unless it's the very last set of the last exercise)
+          circuitSteps.push({ type: 'rest', duration: 30, label: 'Rest Between Sets' });
+        }
+
+        // Add 2-minute water rower transition between exercise changes
+        if (exIdx < allExs.length - 1) {
+          circuitSteps.push({ type: 'row', duration: 120, label: 'Transition Row (Water Rower)' });
+        }
       });
 
-      if (currentWorkout.rowingTime > 0) {
-        rowContainer.innerHTML = `
-          <div class="bg-blue-950/40 border border-blue-900/50 p-3 rounded-lg space-y-1">
-            <span class="text-xs font-bold text-accent">🚣 Water Rower Engine (${currentWorkout.rowingTime} Mins)</span>
-            <p class="text-[11px] text-gray-300">Targeted ${currentWorkout.rowingTime}-minute rowing session focusing on leg drive and double-poling power transfer.</p>
+      currentStepIndex = 0;
+      document.getElementById('generator-controls').classList.add('hidden');
+      document.getElementById('active-workout-card').classList.add('hidden');
+      document.getElementById('smart-suggestion-banner').classList.add('hidden');
+      document.getElementById('interactive-player-card').classList.remove('hidden');
+
+      renderCurrentStep();
+    }
+
+    function renderCurrentStep() {
+      const display = document.getElementById('step-display-area');
+      const actionArea = document.getElementById('circuit-action-area');
+      const badge = document.getElementById('circuit-progress-badge');
+
+      badge.innerText = `Step ${currentStepIndex + 1} of ${circuitSteps.length}`;
+      const step = circuitSteps[currentStepIndex];
+
+      if (step.type === 'exercise') {
+        display.innerHTML = `
+          <span class="text-[10px] bg-gray-800 text-highlight px-2 py-0.5 rounded font-bold uppercase">${step.focus}</span>
+          <h2 class="text-lg font-bold text-accent mt-2">${step.name}</h2>
+          <div class="text-3xl font-extrabold text-white my-3">SET ${step.setNum} OF ${step.totalSets}</div>
+          <div class="flex justify-center gap-4 text-xs text-gray-300">
+            <div>Target Reps: <input type="text" id="live-reps" value="${step.reps}" class="w-14 bg-gray-800 text-center rounded p-1 text-white border border-gray-700"></div>
+            <div>Weight (lbs): <input type="number" step="0.5" id="live-wt" value="${step.weight}" class="w-16 bg-gray-800 text-center rounded p-1 text-white border border-gray-700"></div>
           </div>
         `;
-      } else {
-        rowContainer.innerHTML = "";
+        actionArea.innerHTML = `
+          <button onclick="advanceStep()" class="w-full bg-accent text-white py-3 rounded-xl font-bold text-xs shadow hover:bg-blue-600 transition">
+            Complete Set & Start Rest Timer ⏱️
+          </button>
+        `;
+      } else if (step.type === 'rest' || step.type === 'row') {
+        const isRow = step.type === 'row';
+        display.innerHTML = `
+          <span class="text-[10px] ${isRow ? 'bg-blue-500/20 text-blue-400' : 'bg-amber-500/20 text-amber-400'} px-2 py-0.5 rounded font-bold uppercase">${step.label}</span>
+          <h2 class="text-base font-bold text-gray-200 mt-2">${isRow ? '🚣 Paddle / Double Pole Pace' : '🧊 Breathe & Recover'}</h2>
+          <div id="countdown-timer" class="text-5xl font-extrabold text-highlight my-4">${step.duration}s</div>
+        `;
+        actionArea.innerHTML = `
+          <button onclick="advanceStep()" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-200 py-3 rounded-xl font-bold text-xs transition">
+            Skip / Advance ⏩
+          </button>
+        `;
+        startTimer(step.duration);
       }
     }
 
-    async function saveCompletedWorkout() {
-      const allExs = [...currentWorkout.strength, ...currentWorkout.core];
-      const performances = allExs.map(ex => ({
-        name: ex.name,
-        sets: parseInt(document.getElementById(`sets-${ex.id}`).value) || 3,
-        reps: document.getElementById(`reps-${ex.id}`).value,
-        weight: parseFloat(document.getElementById(`wt-${ex.id}`).value) || 0
-      }));
+    function startTimer(seconds) {
+      clearInterval(timerInterval);
+      let timeLeft = seconds;
+      const timerEl = document.getElementById('countdown-timer');
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        if (timerEl) timerEl.innerText = timeLeft + 's';
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          advanceStep();
+        }
+      }, 1000);
+    }
+
+    function advanceStep() {
+      clearInterval(timerInterval);
+      // Save current input values if it was an exercise step
+      const repInput = document.getElementById('live-reps');
+      const wtInput = document.getElementById('live-wt');
+      if (repInput && wtInput && circuitSteps[currentStepIndex].type === 'exercise') {
+        circuitSteps[currentStepIndex].reps = repInput.value;
+        circuitSteps[currentStepIndex].weight = parseFloat(wtInput.value) || 0;
+      }
+
+      currentStepIndex++;
+      if (currentStepIndex >= circuitSteps.length) {
+        completeAndSaveCircuit();
+      } else {
+        renderCurrentStep();
+      }
+    }
+
+    async function completeAndSaveCircuit() {
+      clearInterval(timerInterval);
+      let performancesMap = {};
+
+      circuitSteps.forEach(s => {
+        if (s.type === 'exercise') {
+          if (!performancesMap[s.name]) {
+            performancesMap[s.name] = { name: s.name, sets: 0, reps: s.reps, weight: s.weight };
+          }
+          performancesMap[s.name].sets++;
+          performancesMap[s.name].reps = s.reps;
+          performancesMap[s.name].weight = s.weight;
+        }
+      });
 
       const payload = {
         split_category: document.getElementById('workout-focus').value.toUpperCase(),
-        rowing_mins: currentWorkout.rowingTime,
-        performances: performances
+        rowing_mins: parseInt(document.getElementById('rowing-time').value) || 0,
+        performances: Object.values(performancesMap)
       };
 
       try {
@@ -437,51 +446,45 @@
         });
 
         if (res.ok) {
-          alert("Workout logged successfully to Supabase Cloud!");
+          alert("Circuit Completed & Logged to Supabase Cloud! 🎉");
+          document.getElementById('interactive-player-card').classList.add('hidden');
+          document.getElementById('generator-controls').classList.remove('hidden');
+          document.getElementById('smart-suggestion-banner').classList.remove('hidden');
           await loadCloudLogs();
           switchTab('coach');
         } else {
-          alert("Error saving workout to cloud.");
+          alert("Error logging workout to cloud.");
         }
-      } catch (err) { alert("Network error saving workout."); }
+      } catch (e) { alert("Network error saving workout."); }
+    }
+
+    function exitInteractiveSession() {
+      clearInterval(timerInterval);
+      if (confirm("Are you sure you want to exit this session? Progress will be lost.")) {
+        document.getElementById('interactive-player-card').classList.add('hidden');
+        document.getElementById('generator-controls').classList.remove('hidden');
+        document.getElementById('smart-suggestion-banner').classList.remove('hidden');
+      }
     }
 
     function renderLibrary() {
       const container = document.getElementById('library-list');
       if (!container) return;
-      container.innerHTML = EXERCISE_DB.map(ex => {
-        const isFav = userPrefs.favorites.includes(ex.id);
-        const isBlack = userPrefs.blacklist.includes(ex.id);
-
-        if (currentLibFilter === 'fav' && !isFav) return '';
-        if (currentLibFilter === 'black' && !isBlack) return '';
-
-        return `
-          <div class="bg-gray-900 p-2.5 rounded-lg border border-gray-800 space-y-1 lib-item" data-search="${ex.name.toLowerCase()} ${ex.category} ${ex.focus.toLowerCase()}">
-            <div class="flex justify-between items-center">
-              <span class="font-bold text-xs ${isBlack ? 'line-through text-red-400' : 'text-gray-200'}">${ex.name}</span>
-              <div class="flex gap-1">
-                <button onclick="toggleFavorite('${ex.id}')" class="p-1 text-xs rounded ${isFav ? 'bg-amber-500/20 text-amber-400' : 'bg-gray-800 text-gray-500'} hover:text-amber-400 transition">⭐</button>
-                <button onclick="toggleBlacklist('${ex.id}')" class="p-1 text-xs rounded ${isBlack ? 'bg-red-500/20 text-red-400' : 'bg-gray-800 text-gray-500'} hover:text-red-400 transition">🚫</button>
-              </div>
-            </div>
-            <p class="text-[11px] text-gray-400">${ex.focus} — <span class="text-accent">Baseline: ${ex.default_sets}x${ex.default_reps} @ ${ex.default_wt}lbs</span></p>
+      container.innerHTML = EXERCISE_DB.map(ex => `
+        <div class="bg-gray-900 p-2.5 rounded-lg border border-gray-800 space-y-1 lib-item" data-search="${ex.name.toLowerCase()} ${ex.category} ${ex.focus.toLowerCase()}">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-xs text-gray-200">${ex.name}</span>
           </div>
-        `;
-      }).join('');
+          <p class="text-[11px] text-gray-400">${ex.focus} — <span class="text-accent">Baseline: ${ex.default_sets}x${ex.default_reps} @ ${ex.default_wt}lbs</span></p>
+        </div>
+      `).join('');
     }
 
     function setLibraryFilter(filter) {
       currentLibFilter = filter;
       ['all', 'fav', 'black'].forEach(f => {
         const btn = document.getElementById(`flt-${f}`);
-        if (btn) {
-          if (f === filter) {
-            btn.className = "flex-1 bg-gray-800 text-accent font-bold py-1.5 rounded border border-gray-700";
-          } else {
-            btn.className = "flex-1 bg-gray-900 text-gray-400 font-bold py-1.5 rounded border border-gray-800";
-          }
-        }
+        if (btn) btn.className = f === filter ? "flex-1 bg-gray-800 text-accent font-bold py-1.5 rounded border border-gray-700" : "flex-1 bg-gray-900 text-gray-400 font-bold py-1.5 rounded border border-gray-800";
       });
       renderLibrary();
     }
@@ -498,23 +501,15 @@
         const tabEl = document.getElementById(`tab-${t}`);
         const btnEl = document.getElementById(`btn-${t}`);
         if (tabEl) tabEl.classList.add('hidden');
-        if (btnEl) {
-          btnEl.classList.remove('text-accent', 'bg-gray-800');
-          btnEl.classList.add('text-gray-400');
-        }
+        if (btnEl) { btnEl.classList.remove('text-accent', 'bg-gray-800'); btnEl.classList.add('text-gray-400'); }
       });
       const targetTab = document.getElementById(`tab-${tab}`);
       const targetBtn = document.getElementById(`btn-${tab}`);
       if (targetTab) targetTab.classList.remove('hidden');
-      if (targetBtn) {
-        targetBtn.classList.add('text-accent', 'bg-gray-800');
-        targetBtn.classList.remove('text-gray-400');
-      }
+      if (targetBtn) { targetBtn.classList.add('text-accent', 'bg-gray-800'); targetBtn.classList.remove('text-gray-400'); }
     }
 
-    window.onload = function() {
-      initApp();
-    };
+    window.onload = function() { initApp(); };
   </script>
 </body>
 </html>
