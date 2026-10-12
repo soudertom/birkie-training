@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Birkie Training Commander</title>
+  <title>Birkie Training Commander (Supabase)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -21,14 +21,14 @@
   <!-- Header -->
   <header class="p-4 bg-cardbg border-b border-gray-800 sticky top-0 z-50 text-center">
     <h1 class="text-xl font-bold text-accent">🎿 Birkie Training Commander</h1>
-    <p class="text-xs text-gray-400">Custom Sheet 2 Tracker + Rower Engine</p>
+    <p class="text-xs text-gray-400">Supabase Cloud Connected Engine</p>
   </header>
 
   <!-- Navigation Tabs -->
   <nav class="flex justify-around bg-cardbg p-2 border-b border-gray-800 text-xs font-bold">
     <button onclick="switchTab('generator')" id="btn-generator" class="py-2 px-3 rounded text-accent bg-gray-800">⚡ Generator</button>
     <button onclick="switchTab('library')" id="btn-library" class="py-2 px-3 rounded text-gray-400">📚 Movements</button>
-    <button onclick="switchTab('log')" id="btn-log" class="py-2 px-3 rounded text-gray-400">📝 History</button>
+    <button onclick="switchTab('log')" id="btn-log" class="py-2 px-3 rounded text-gray-400">📝 Cloud History</button>
   </nav>
 
   <main class="p-4 max-w-md mx-auto space-y-4">
@@ -36,7 +36,10 @@
     <!-- TAB 1: WORKOUT GENERATOR -->
     <div id="tab-generator" class="space-y-4">
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
-        <h2 class="text-sm font-bold text-highlight">⚙️ Build Today's Session</h2>
+        <div class="flex justify-between items-center">
+          <h2 class="text-sm font-bold text-highlight">⚙️ Build Session</h2>
+          <span id="sync-status" class="text-[10px] text-accent">● Cloud Sync Ready</span>
+        </div>
         
         <div class="grid grid-cols-2 gap-2">
           <div>
@@ -60,7 +63,7 @@
         </div>
 
         <button onclick="generateWorkout()" class="w-full bg-accent text-white py-2.5 rounded-lg text-xs font-bold shadow hover:bg-blue-600 transition">
-          Generate Session with Progression 🚀
+          Generate Session 🚀
         </button>
       </div>
 
@@ -75,7 +78,7 @@
         <div id="rowing-prescription" class="space-y-2"></div>
 
         <button onclick="saveCompletedWorkout()" class="w-full bg-emerald-600 text-white py-2.5 rounded-lg text-xs font-bold shadow hover:bg-emerald-700 transition mt-2">
-          Log Completed Session & Save PRs ✅
+          Log Session to Supabase Cloud ✅
         </button>
       </div>
     </div>
@@ -84,7 +87,7 @@
     <div id="tab-library" class="space-y-4 hidden">
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
         <div class="flex justify-between items-center">
-          <h2 class="text-sm font-bold text-highlight">🏋️ Custom Movement Library</h2>
+          <h2 class="text-sm font-bold text-highlight">🏋️ Supabase Movement Library</h2>
           <span class="text-[10px] text-gray-400">⭐ Favored | 🚫 Blocked</span>
         </div>
         
@@ -96,55 +99,49 @@
           <button onclick="setLibraryFilter('black')" id="flt-black" class="flex-1 bg-gray-900 text-gray-400 font-bold py-1.5 rounded border border-gray-800">🚫 Blocked</button>
         </div>
 
-        <div id="library-list" class="space-y-2 max-h-[26rem] overflow-y-auto pr-1"></div>
+        <div id="library-list" class="space-y-2 max-h-[26rem] overflow-y-auto pr-1">
+          <p class="text-xs text-gray-500">Loading movements from cloud database...</p>
+        </div>
       </div>
     </div>
 
     <!-- TAB 3: SESSION LOG & HISTORY -->
     <div id="tab-log" class="space-y-4 hidden">
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
-        <h2 class="text-sm font-bold text-highlight">📖 History & Past Performance</h2>
-        <div id="completed-log-list" class="space-y-2 max-h-[28rem] overflow-y-auto pr-1"></div>
+        <h2 class="text-sm font-bold text-highlight">📖 Cloud Session History</h2>
+        <div id="completed-log-list" class="space-y-2 max-h-[28rem] overflow-y-auto pr-1">
+          <p class="text-xs text-gray-500">Loading cloud history...</p>
+        </div>
       </div>
     </div>
 
   </main>
 
   <script>
-    // EXACT MOVEMENTS EXTRACTED FROM YOUR SHEET 2 WORKOUT TRACKER
-    const EXERCISE_DB = [
-      // PUSH (Upper A / Push)
-      { id: 'p1', name: 'Flat Dumbbell Press', category: 'push', equipment: 'Dumbbell', focus: 'Chest & Triceps', default_sets: 4, default_reps: '8–12', default_wt: 52.5 },
-      { id: 'p2', name: 'Incline Dumbbell Fly', category: 'push', equipment: 'Dumbbell', focus: 'Upper Chest Isolation', default_sets: 4, default_reps: '8–12', default_wt: 30 },
-      { id: 'p3', name: 'Arnold Press', category: 'push', equipment: 'Dumbbell', focus: 'Shoulders & Stability', default_sets: 3, default_reps: '10–12', default_wt: 30 },
-      { id: 'p4', name: 'Dumbbell Kick Back', category: 'push', equipment: 'Dumbbell', focus: 'Triceps Isolation', default_sets: 3, default_reps: '10–12', default_wt: 35 },
-      { id: 'p5', name: 'Lateral Raise', category: 'push', equipment: 'Dumbbell', focus: 'Side Delts', default_sets: 3, default_reps: '12–15', default_wt: 20 },
-      { id: 'p6', name: 'Overhead Tricep Extension', category: 'push', equipment: 'Dumbbell', focus: 'Triceps Long Head', default_sets: 3, default_reps: '10–12', default_wt: 52.5 },
+    const SUPABASE_URL = 'https://crtvkqpaajyfubdrofwx.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_VM-b9PU3kKoGwbjF8w2qxQ_ujdrkuSU';
 
-      // PULL (Upper B / Pull)
-      { id: 'l1', name: 'One-Arm Dumbbell Row', category: 'pull', equipment: 'Dumbbell', focus: 'Lat Thickness', default_sets: 4, default_reps: '8–12', default_wt: 52.5 },
-      { id: 'l2', name: 'Reverse Row (supinated grip)', category: 'pull', equipment: 'Dumbbell', focus: 'Mid-Back & Biceps', default_sets: 4, default_reps: '8–12', default_wt: 52.5 },
-      { id: 'l3', name: 'Dumbbell Pullover', category: 'pull', equipment: 'Dumbbell', focus: 'Lats & Serratus', default_sets: 3, default_reps: '10–12', default_wt: 52.5 },
-      { id: 'l4', name: 'Dumbbell Curl', category: 'pull', equipment: 'Dumbbell', focus: 'Biceps Isolation', default_sets: 3, default_reps: '10–12', default_wt: 25 },
-      { id: 'l5', name: 'Rear Delt Fly', category: 'pull', equipment: 'Dumbbell', focus: 'Rear Delts & Upper Back', default_sets: 3, default_reps: '12–15', default_wt: 35 },
-      { id: 'l6', name: 'Hammer Curl', category: 'pull', equipment: 'Dumbbell', focus: 'Brachialis & Forearms', default_sets: 3, default_reps: '10–12', default_wt: 35 },
-
-      // LEGS (Lower)
-      { id: 'g1', name: 'Goblet Squat', category: 'legs', equipment: 'Kettlebell', focus: 'Quads & Upper Posture', default_sets: 4, default_reps: '10–12', default_wt: 50 },
-      { id: 'g2', name: 'Dumbbell Romanian Deadlift', category: 'legs', equipment: 'Dumbbell', focus: 'Hamstrings & Glutes', default_sets: 4, default_reps: '8–12', default_wt: 90 },
-      { id: 'g3', name: 'Bulgarian Split Squat', category: 'legs', equipment: 'Dumbbell', focus: 'Unilateral Quads & Glutes', default_sets: 3, default_reps: '8–10', default_wt: 60 },
-      { id: 'g4', name: 'Hip Thrust', category: 'legs', equipment: 'Dumbbell', focus: 'Glute Power', default_sets: 4, default_reps: '10–12', default_wt: 50 },
-      { id: 'g5', name: 'Dumbbell Calf Raise', category: 'legs', equipment: 'Dumbbell', focus: 'Calves', default_sets: 3, default_reps: '15–20', default_wt: 100 },
-
-      // DEDICATED CORE (5-Min Block)
-      { id: 'c1', name: 'Russian Twist', category: 'core', equipment: 'Dumbbell/Plate', focus: 'Obliques & Core', default_sets: 3, default_reps: '15–20', default_wt: 25 },
-      { id: 'c2', name: 'Leg Raise', category: 'core', equipment: 'Bodyweight', focus: 'Lower Abs', default_sets: 3, default_reps: '10–15', default_wt: 0 }
-    ];
-
+    let EXERCISE_DB = [];
     let userPrefs = JSON.parse(localStorage.getItem('birkie_exercise_prefs') || '{"favorites":[],"blacklist":[]}');
-    let exerciseHistory = JSON.parse(localStorage.getItem('birkie_exercise_history') || '{}');
     let currentWorkout = { strength: [], core: null, rowingTime: 0 };
     let currentLibFilter = 'all';
+
+    async function initApp() {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/birkie_movements?select=*`, {
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        if (res.ok) {
+          EXERCISE_DB = await res.json();
+          renderLibrary();
+        } else {
+          document.getElementById('sync-status').innerText = "● Cloud Sync Error";
+        }
+      } catch (e) {
+        document.getElementById('sync-status').innerText = "● Offline Mode";
+      }
+      loadCloudLogs();
+    }
 
     function savePrefs() {
       localStorage.setItem('birkie_exercise_prefs', JSON.stringify(userPrefs));
@@ -176,7 +173,6 @@
       const focus = document.getElementById('workout-focus').value;
       const rowingMins = parseInt(document.getElementById('rowing-time').value);
       
-      // 1. Pick 3-4 strength movements for the split matching Sheet 2
       let candidates = EXERCISE_DB.filter(e => !userPrefs.blacklist.includes(e.id) && e.category === focus);
       if (candidates.length === 0) { alert("No available movements for this split (check blacklist)."); return; }
 
@@ -192,7 +188,6 @@
         if (!selectedStrength.some(s => s.id === ex.id)) selectedStrength.push(ex);
       }
 
-      // 2. Pick 1 dedicated core movement (5 min block)
       let coreCandidates = EXERCISE_DB.filter(e => !userPrefs.blacklist.includes(e.id) && e.category === 'core');
       const coreEx = coreCandidates[Math.floor(Math.random() * coreCandidates.length)];
 
@@ -203,18 +198,6 @@
       };
 
       renderCurrentWorkout();
-    }
-
-    function getProgressionSuggestion(exId, defaultSets, defaultReps, defaultWt) {
-      const history = exerciseHistory[exId];
-      if (!history || history.length === 0) {
-        return `${defaultSets} sets x ${defaultReps} reps @ ${defaultWt} lbs <span class="text-xs text-gray-500">(Sheet 2 Baseline)</span>`;
-      }
-      const last = history[history.length - 1];
-      
-      let suggestedWt = last.weight + 2.5; // Progressive overload weight suggestion
-
-      return `<span class="text-accent font-bold">${last.sets}x${last.reps} @ ${last.weight}lbs</span> ➔ <span class="text-highlight">Target: Bump Weight to ${suggestedWt}lbs</span>`;
     }
 
     function renderCurrentWorkout() {
@@ -229,7 +212,6 @@
       allExs.forEach((ex, index) => {
         const isCore = ex.category === 'core';
         const badge = isCore ? '<span class="text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">5-MIN CORE BLOCK</span>' : `<span class="text-[9px] bg-gray-800 px-1.5 py-0.5 rounded text-gray-400">#${index+1} Exercise</span>`;
-        const suggestionHtml = getProgressionSuggestion(ex.id, ex.default_sets, ex.default_reps, ex.default_wt);
 
         container.innerHTML += `
           <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1.5">
@@ -237,7 +219,7 @@
               <span class="font-bold text-xs text-gray-100">${ex.name}</span>
               ${badge}
             </div>
-            <div class="text-[11px] text-gray-300">History: ${suggestionHtml}</div>
+            <div class="text-[11px] text-gray-400">Target: ${ex.focus}</div>
             <div class="grid grid-cols-3 gap-1 pt-1 text-[11px]">
               <input type="number" id="sets-${ex.id}" value="${ex.default_sets}" placeholder="Sets" class="bg-gray-800 border border-gray-700 rounded p-1 text-center text-gray-200">
               <input type="text" id="reps-${ex.id}" value="${ex.default_reps}" placeholder="Reps" class="bg-gray-800 border border-gray-700 rounded p-1 text-center text-gray-200">
@@ -251,7 +233,7 @@
         rowContainer.innerHTML = `
           <div class="bg-blue-950/40 border border-blue-900/50 p-3 rounded-lg space-y-1">
             <span class="text-xs font-bold text-accent">🚣 Water Rower Engine (${currentWorkout.rowingTime} Mins)</span>
-            <p class="text-[11px] text-gray-300">Targeted ${currentWorkout.rowingTime}-minute rowing session focusing on smooth leg drive, posture, and double-poling power transfer.</p>
+            <p class="text-[11px] text-gray-300">Targeted ${currentWorkout.rowingTime}-minute rowing session focusing on leg drive and double-poling power transfer.</p>
           </div>
         `;
       } else {
@@ -259,60 +241,79 @@
       }
     }
 
-    function saveCompletedWorkout() {
+    async function saveCompletedWorkout() {
       const allExs = [...currentWorkout.strength, currentWorkout.core];
-      const sessionLog = {
-        date: new Date().toLocaleDateString(),
-        rowing: currentWorkout.rowingTime,
-        performances: []
+      const performances = allExs.map(ex => ({
+        name: ex.name,
+        sets: parseInt(document.getElementById(`sets-${ex.id}`).value) || 3,
+        reps: document.getElementById(`reps-${ex.id}`).value,
+        weight: parseFloat(document.getElementById(`wt-${ex.id}`).value) || 0
+      }));
+
+      const payload = {
+        split_category: document.getElementById('workout-focus').value.toUpperCase(),
+        rowing_mins: currentWorkout.rowingTime,
+        performances: performances
       };
 
-      allExs.forEach(ex => {
-        const sets = parseInt(document.getElementById(`sets-${ex.id}`).value) || 3;
-        const reps = document.getElementById(`reps-${ex.id}`).value;
-        const weight = parseFloat(document.getElementById(`wt-${ex.id}`).value) || 0;
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/birkie_workout_logs`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify(payload)
+        });
 
-        sessionLog.performances.push({ name: ex.name, sets, reps, weight });
-
-        if (!exerciseHistory[ex.id]) exerciseHistory[ex.id] = [];
-        exerciseHistory[ex.id].push({ date: new Date().toLocaleDateString(), sets, reps: parseInt(reps) || 10, weight });
-      });
-
-      localStorage.setItem('birkie_exercise_history', JSON.stringify(exerciseHistory));
-
-      const history = JSON.parse(localStorage.getItem('birkie_workout_log') || '[]');
-      history.unshift(sessionLog);
-      localStorage.setItem('birkie_workout_log', JSON.stringify(history));
-
-      alert("Workout logged successfully & saved to history!");
-      loadCompletedLog();
-      switchTab('log');
+        if (res.ok) {
+          alert("Workout logged successfully to Supabase Cloud!");
+          loadCloudLogs();
+          switchTab('log');
+        } else {
+          alert("Error saving workout to cloud.");
+        }
+      } catch (err) { alert("Network error saving workout."); }
     }
 
-    function loadCompletedLog() {
+    async function loadCloudLogs() {
       const container = document.getElementById('completed-log-list');
-      const history = JSON.parse(localStorage.getItem('birkie_workout_log') || '[]');
-
-      if (history.length === 0) {
-        container.innerHTML = `<p class="text-xs text-gray-500">No session history recorded yet.</p>`;
-        return;
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/birkie_workout_logs?select=*&order=logged_at.desc`, {
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        if (res.ok) {
+          const logs = await res.json();
+          if (logs.length === 0) {
+            container.innerHTML = `<p class="text-xs text-gray-500">No cloud logs recorded yet.</p>`;
+            return;
+          }
+          container.innerHTML = logs.map(h => `
+            <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1.5 text-xs">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-accent">${h.split_category} — ${h.rowing_mins > 0 ? `+ ${h.rowing_mins}m Row` : 'Strength Only'}</span>
+                <span class="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded">${h.logged_at.split('T')[0]}</span>
+              </div>
+              <div class="text-[11px] text-gray-300 space-y-0.5 pt-1">
+                ${h.performances.map(p => `<div>• ${p.name}: <b>${p.sets}x${p.reps} @${p.weight}lbs</b></div>`).join('')}
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (e) {
+        container.innerHTML = `<p class="text-xs text-red-400">Could not load history from cloud.</p>`;
       }
-
-      container.innerHTML = history.map(h => `
-        <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1.5 text-xs">
-          <div class="flex justify-between items-center">
-            <span class="font-bold text-accent">SESSION — ${h.rowing > 0 ? `+ ${h.rowing}m Row` : 'Strength Only'}</span>
-            <span class="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded">${h.date}</span>
-          </div>
-          <div class="text-[11px] text-gray-300 space-y-0.5 pt-1">
-            ${h.performances.map(p => `<div>• ${p.name}: <b>${p.sets}x${p.reps} @${p.weight}lbs</b></div>`).join('')}
-          </div>
-        </div>
-      `).join('');
     }
 
     function renderLibrary() {
       const container = document.getElementById('library-list');
+      if (EXERCISE_DB.length === 0) {
+        container.innerHTML = `<p class="text-xs text-gray-500">No movements found.</p>`;
+        return;
+      }
+
       container.innerHTML = EXERCISE_DB.map(ex => {
         const isFav = userPrefs.favorites.includes(ex.id);
         const isBlack = userPrefs.blacklist.includes(ex.id);
@@ -371,8 +372,7 @@
     }
 
     window.onload = function() {
-      renderLibrary();
-      loadCompletedLog();
+      initApp();
     };
   </script>
 </body>
