@@ -34,20 +34,21 @@
 
   <main class="p-4 max-w-md mx-auto space-y-4">
 
-    <!-- SMART SUGGESTION BANNER (SUN-SUN ROTATION) -->
-    <div id="smart-suggestion-banner" class="bg-blue-950/60 border border-blue-900/60 p-3 rounded-xl space-y-1.5 hidden">
-      <div class="flex justify-between items-center">
-        <span class="text-xs font-bold text-accent">💡 Smart Split Recommendation</span>
-        <span id="suggestion-badge" class="text-[10px] bg-accent text-white px-2 py-0.5 rounded font-bold">Sun-Sun Cycle</span>
-      </div>
-      <p id="suggestion-text" class="text-[11px] text-gray-300">Calculating weekly frequency...</p>
-      <button onclick="applySmartSuggestion()" class="w-full bg-accent/20 hover:bg-accent/30 text-accent font-bold py-1.5 rounded text-xs border border-accent/40 transition mt-1">
-        Apply Suggested Split 🚀
-      </button>
-    </div>
-
     <!-- TAB 1: WORKOUT GENERATOR -->
     <div id="tab-generator" class="space-y-4">
+
+      <!-- SMART SUGGESTION BANNER (SUN-SUN ROTATION) -->
+      <div id="smart-suggestion-banner" class="bg-blue-950/60 border border-blue-900/60 p-3 rounded-xl space-y-1.5">
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-bold text-accent">💡 Smart Split Recommendation</span>
+          <span class="text-[10px] bg-accent text-white px-2 py-0.5 rounded font-bold">Sun-Sun Cycle</span>
+        </div>
+        <p id="suggestion-text" class="text-[11px] text-gray-300">Checking weekly training frequency...</p>
+        <button onclick="applySmartSuggestion()" class="w-full bg-accent/20 hover:bg-accent/30 text-accent font-bold py-1.5 rounded text-xs border border-accent/40 transition mt-1">
+          Apply Suggested Split 🚀
+        </button>
+      </div>
+
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
         <div class="flex justify-between items-center">
           <h2 class="text-sm font-bold text-highlight">⚙️ Build Session</h2>
@@ -184,7 +185,7 @@
 
     async function loadCloudLogs() {
       const container = document.getElementById('completed-log-list');
-      container.innerHTML = `<p class="text-xs text-gray-500">Syncing with cloud...</p>`;
+      if (container) container.innerHTML = `<p class="text-xs text-gray-500">Syncing with cloud...</p>`;
       
       try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/birkie_workout_logs?select=*&order=logged_at.desc`, {
@@ -194,40 +195,40 @@
         if (res.ok) {
           cloudLogsCache = await res.json();
           if (!cloudLogsCache || cloudLogsCache.length === 0) {
-            container.innerHTML = `<p class="text-xs text-gray-500">No cloud logs recorded yet.</p>';
+            if (container) container.innerHTML = `<p class="text-xs text-gray-500">No cloud logs recorded yet.</p>`;
           } else {
-            container.innerHTML = cloudLogsCache.map(h => `
-              <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1.5 text-xs">
-                <div class="flex justify-between items-center">
-                  <span class="font-bold text-accent">${h.split_category || 'WORKOUT'} — ${h.rowing_mins > 0 ? `+ ${h.rowing_mins}m Row` : 'Strength Only'}</span>
-                  <span class="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded">${h.logged_at ? h.logged_at.split('T')[0] : 'Recent'}</span>
+            if (container) {
+              container.innerHTML = cloudLogsCache.map(h => `
+                <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1.5 text-xs">
+                  <div class="flex justify-between items-center">
+                    <span class="font-bold text-accent">${h.split_category || 'WORKOUT'} — ${h.rowing_mins > 0 ? `+ ${h.rowing_mins}m Row` : 'Strength Only'}</span>
+                    <span class="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded">${h.logged_at ? h.logged_at.split('T')[0] : 'Recent'}</span>
+                  </div>
+                  <div class="text-[11px] text-gray-300 space-y-0.5 pt-1">
+                    ${Array.isArray(h.performances) ? h.performances.map(p => `<div>• ${p.name}: <b>${p.sets}x${p.reps} @${p.weight}lbs</b></div>`).join('') : '<div>Performance details logged</div>'}
+                  </div>
                 </div>
-                <div class="text-[11px] text-gray-300 space-y-0.5 pt-1">
-                  ${Array.isArray(h.performances) ? h.performances.map(p => `<div>• ${p.name}: <b>${p.sets}x${p.reps} @${p.weight}lbs</b></div>`).join('') : '<div>Performance details logged</div>'}
-                </div>
-              </div>
-            `).join('');
+              `).join('');
+            }
           }
           generateAICoachInsights(cloudLogsCache);
           calculateSundayToSundaySuggestion(cloudLogsCache);
         } else {
-          container.innerHTML = `<p class="text-xs text-red-400">Failed to fetch cloud logs (Status ${res.status}).</p>`;
+          if (container) container.innerHTML = `<p class="text-xs text-red-400">Failed to fetch cloud logs (Status ${res.status}).</p>`;
         }
       } catch (e) {
-        container.innerHTML = `<p class="text-xs text-red-400">Network error connecting to Supabase.</p>`;
+        if (container) container.innerHTML = `<p class="text-xs text-red-400">Network error connecting to Supabase.</p>`;
       }
     }
 
     function calculateSundayToSundaySuggestion(logs) {
-      // Find current Sunday start of week
       const now = new Date();
-      const currentDay = now.getDay(); // 0 is Sunday
+      const currentDay = now.getDay();
       const sunday = new Date(now);
       sunday.setDate(now.getDate() - currentDay);
       sunday.setHours(0, 0, 0, 0);
 
-      // Filter logs from this Sunday onwards
-      const thisWeekLogs = logs.filter(l => new Date(l.logged_at) >= sunday);
+      const thisWeekLogs = (logs || []).filter(l => new Date(l.logged_at) >= sunday);
 
       let counts = { PUSH: 0, PULL: 0, LEGS: 0 };
       thisWeekLogs.forEach(l => {
@@ -237,7 +238,6 @@
         else if (cat.includes('LEGS') || cat.includes('LOWER')) counts.LEGS++;
       });
 
-      // Find lowest count
       let minVal = Infinity;
       let lowestSplit = 'push';
       ['PUSH', 'PULL', 'LEGS'].forEach(split => {
@@ -250,19 +250,22 @@
       suggestedSplit = lowestSplit;
       const splitNames = { push: 'Push (Chest & Tris)', pull: 'Pull (Back & Bis)', legs: 'Legs (Quads & Hams)' };
 
-      const banner = document.getElementById('smart-suggestion-banner');
       const text = document.getElementById('suggestion-text');
-      banner.classList.remove('hidden');
-      text.innerHTML = `This week (Sun-Sun): Push (${counts.PUSH}), Pull (${counts.PULL}), Legs (${counts.LEGS}). <b>Recommended next: ${splitNames[lowestSplit]}</b>`;
+      if (text) {
+        text.innerHTML = `This week (Sun-Sun): Push (${counts.PUSH}), Pull (${counts.PULL}), Legs (${counts.LEGS}).<br><b>Recommended next: ${splitNames[lowestSplit]}</b>`;
+      }
     }
 
     function applySmartSuggestion() {
-      document.getElementById('workout-focus').value = suggestedSplit;
+      const select = document.getElementById('workout-focus');
+      if (select) select.value = suggestedSplit;
       generateWorkout();
     }
 
     function generateAICoachInsights(logs) {
       const coachContainer = document.getElementById('ai-coach-output');
+      if (!coachContainer) return;
+
       if (!logs || logs.length === 0) {
         coachContainer.innerHTML = `<div class="bg-gray-900 p-3 rounded-lg border border-gray-800 text-gray-400">Complete your first workout to unlock AI coaching insights!</div>`;
         return;
@@ -298,7 +301,7 @@
 
         <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1">
           <div class="font-bold text-accent">🎯 AI Coach Recommendation</div>
-          <p class="text-gray-300 text-[11px]">Last logged session was <b>${lastWorkout.split_category}</b>. Follow the smart rotation banner above to balance your weekly volume.</p>
+          <p class="text-gray-300 text-[11px]">Last logged session was <b>${lastWorkout.split_category || 'WORKOUT'}</b>. Follow the smart rotation banner above to balance your weekly volume.</p>
         </div>
       `;
     }
@@ -348,7 +351,7 @@
         if (!selectedStrength.some(s => s.id === ex.id)) selectedStrength.push(ex);
       }
 
-      // Pick 2 DEDICATED CORE movements instead of 1
+      // Pick 2 DEDICATED CORE movements
       let coreCandidates = EXERCISE_DB.filter(e => !userPrefs.blacklist.includes(e.id) && e.category === 'core');
       let selectedCore = [];
       while (selectedCore.length < Math.min(2, coreCandidates.length)) {
@@ -373,7 +376,6 @@
       card.classList.remove('hidden');
       container.innerHTML = '';
 
-      // Combine strength + 2 core movements
       const allExs = [...currentWorkout.strength, ...currentWorkout.core];
       allExs.forEach((ex, index) => {
         const isCore = ex.category === 'core';
@@ -446,6 +448,7 @@
 
     function renderLibrary() {
       const container = document.getElementById('library-list');
+      if (!container) return;
       container.innerHTML = EXERCISE_DB.map(ex => {
         const isFav = userPrefs.favorites.includes(ex.id);
         const isBlack = userPrefs.blacklist.includes(ex.id);
@@ -472,10 +475,12 @@
       currentLibFilter = filter;
       ['all', 'fav', 'black'].forEach(f => {
         const btn = document.getElementById(`flt-${f}`);
-        if (f === filter) {
-          btn.className = "flex-1 bg-gray-800 text-accent font-bold py-1.5 rounded border border-gray-700";
-        } else {
-          btn.className = "flex-1 bg-gray-900 text-gray-400 font-bold py-1.5 rounded border border-gray-800";
+        if (btn) {
+          if (f === filter) {
+            btn.className = "flex-1 bg-gray-800 text-accent font-bold py-1.5 rounded border border-gray-700";
+          } else {
+            btn.className = "flex-1 bg-gray-900 text-gray-400 font-bold py-1.5 rounded border border-gray-800";
+          }
         }
       });
       renderLibrary();
@@ -490,13 +495,21 @@
 
     function switchTab(tab) {
       ['generator', 'coach', 'library', 'log'].forEach(t => {
-        document.getElementById(`tab-${t}`).classList.add('hidden');
-        document.getElementById(`btn-${t}`).classList.remove('text-accent', 'bg-gray-800');
-        document.getElementById(`btn-${t}`).classList.add('text-gray-400');
+        const tabEl = document.getElementById(`tab-${t}`);
+        const btnEl = document.getElementById(`btn-${t}`);
+        if (tabEl) tabEl.classList.add('hidden');
+        if (btnEl) {
+          btnEl.classList.remove('text-accent', 'bg-gray-800');
+          btnEl.classList.add('text-gray-400');
+        }
       });
-      document.getElementById(`tab-${tab}`).classList.remove('hidden');
-      document.getElementById(`btn-${tab}`).classList.add('text-accent', 'bg-gray-800');
-      document.getElementById(`btn-${tab}`).classList.remove('text-gray-400');
+      const targetTab = document.getElementById(`tab-${tab}`);
+      const targetBtn = document.getElementById(`btn-${tab}`);
+      if (targetTab) targetTab.classList.remove('hidden');
+      if (targetBtn) {
+        targetBtn.classList.add('text-accent', 'bg-gray-800');
+        targetBtn.classList.remove('text-gray-400');
+      }
     }
 
     window.onload = function() {
