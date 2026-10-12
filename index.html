@@ -21,7 +21,7 @@
   <!-- Header -->
   <header class="p-4 bg-cardbg border-b border-gray-800 sticky top-0 z-50 text-center">
     <h1 class="text-xl font-bold text-accent">🎿 Birkie Training Commander</h1>
-    <p class="text-xs text-gray-400">45-Min PPL + Core + Water Rower Engine</p>
+    <p class="text-xs text-gray-400">Custom Sheet 2 Tracker + Rower Engine</p>
   </header>
 
   <!-- Navigation Tabs -->
@@ -36,25 +36,25 @@
     <!-- TAB 1: WORKOUT GENERATOR -->
     <div id="tab-generator" class="space-y-4">
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
-        <h2 class="text-sm font-bold text-highlight">⚙️ Build Today's 45-Min Session</h2>
+        <h2 class="text-sm font-bold text-highlight">⚙️ Build Today's Session</h2>
         
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block text-[11px] text-gray-400 mb-1">Strength Split</label>
+            <label class="block text-[11px] text-gray-400 mb-1">Workout Split</label>
             <select id="workout-focus" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-xs text-gray-200 focus:outline-none focus:border-accent">
-              <option value="push">Push (Chest & Tris)</option>
-              <option value="pull">Pull (Back & Bis)</option>
-              <option value="legs">Legs (Quads & Hams)</option>
+              <option value="push">Upper A / Push (Chest, Shoulders, Tris)</option>
+              <option value="pull">Upper B / Pull (Back & Bis)</option>
+              <option value="legs">Lower / Legs (Squat, RDL, Split Squat)</option>
             </select>
           </div>
           <div>
-            <label class="block text-[11px] text-gray-400 mb-1">Rowing Add-on</label>
+            <label class="block text-[11px] text-gray-400 mb-1">Water Rower Block</label>
             <select id="rowing-time" class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-xs text-gray-200 focus:outline-none focus:border-accent">
-              <option value="0">Strength Only (45m)</option>
-              <option value="20">+ 20 Min Row</option>
-              <option value="30">+ 30 Min Row</option>
-              <option value="45">+ 45 Min Row</option>
-              <option value="60">+ 60 Min Row</option>
+              <option value="0">Strength + Core Only (45m)</option>
+              <option value="20">+ 20 Min Row Intervals</option>
+              <option value="30">+ 30 Min Steady State</option>
+              <option value="45">+ 45 Min Aerobic Row</option>
+              <option value="60">+ 60 Min Long Row</option>
             </select>
           </div>
         </div>
@@ -68,7 +68,7 @@
       <div id="active-workout-card" class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3 hidden">
         <div class="flex justify-between items-center border-b border-gray-800 pb-2">
           <h3 id="generated-title" class="text-sm font-bold text-accent">Session Breakdown</h3>
-          <span id="generated-count" class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-highlight">45m + Core</span>
+          <span id="generated-count" class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-highlight">45m + 5m Core</span>
         </div>
 
         <div id="exercise-list" class="space-y-3"></div>
@@ -84,7 +84,7 @@
     <div id="tab-library" class="space-y-4 hidden">
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
         <div class="flex justify-between items-center">
-          <h2 class="text-sm font-bold text-highlight">🏋️ Movement Library</h2>
+          <h2 class="text-sm font-bold text-highlight">🏋️ Custom Movement Library</h2>
           <span class="text-[10px] text-gray-400">⭐ Favored | 🚫 Blocked</span>
         </div>
         
@@ -111,35 +111,34 @@
   </main>
 
   <script>
+    // EXACT MOVEMENTS EXTRACTED FROM YOUR SHEET 2 WORKOUT TRACKER
     const EXERCISE_DB = [
-      // PUSH (Chest & Tris)
-      { id: 'p1', name: 'DB / KB Floor Press', category: 'push', equipment: 'Dumbbell/KB', focus: 'Chest & Triceps', default_sets: 3, default_reps: 10, default_wt: 45 },
-      { id: 'p2', name: 'DB Incline Bench Press', category: 'push', equipment: 'Dumbbell', focus: 'Upper Chest & Front Delts', default_sets: 3, default_reps: 10, default_wt: 40 },
-      { id: 'p3', name: 'Single-Arm KB Push Press', category: 'push', equipment: 'Kettlebell', focus: 'Shoulder & Triceps Power', default_sets: 3, default_reps: 8, default_wt: 32 },
-      { id: 'p4', name: 'DB Arnold Press', category: 'push', equipment: 'Dumbbell', focus: 'Deltoids & Stability', default_sets: 3, default_reps: 12, default_wt: 30 },
-      { id: 'p5', name: 'DB Skull Crushers / Overhead Ext', category: 'push', equipment: 'Dumbbell', focus: 'Triceps Isolation', default_sets: 3, default_reps: 12, default_wt: 25 },
-      { id: 'p6', name: 'Weighted Push-Ups', category: 'push', equipment: 'Bodyweight', focus: 'Chest & Core Integration', default_sets: 3, default_reps: 15, default_wt: 0 },
+      // PUSH (Upper A / Push)
+      { id: 'p1', name: 'Flat Dumbbell Press', category: 'push', equipment: 'Dumbbell', focus: 'Chest & Triceps', default_sets: 4, default_reps: '8–12', default_wt: 52.5 },
+      { id: 'p2', name: 'Incline Dumbbell Fly', category: 'push', equipment: 'Dumbbell', focus: 'Upper Chest Isolation', default_sets: 4, default_reps: '8–12', default_wt: 30 },
+      { id: 'p3', name: 'Arnold Press', category: 'push', equipment: 'Dumbbell', focus: 'Shoulders & Stability', default_sets: 3, default_reps: '10–12', default_wt: 30 },
+      { id: 'p4', name: 'Dumbbell Kick Back', category: 'push', equipment: 'Dumbbell', focus: 'Triceps Isolation', default_sets: 3, default_reps: '10–12', default_wt: 35 },
+      { id: 'p5', name: 'Lateral Raise', category: 'push', equipment: 'Dumbbell', focus: 'Side Delts', default_sets: 3, default_reps: '12–15', default_wt: 20 },
+      { id: 'p6', name: 'Overhead Tricep Extension', category: 'push', equipment: 'Dumbbell', focus: 'Triceps Long Head', default_sets: 3, default_reps: '10–12', default_wt: 52.5 },
 
-      // PULL (Back & Bis)
-      { id: 'l1', name: 'Double KB Gorilla Rows', category: 'pull', equipment: 'Kettlebell', focus: 'Lats & Upper Back', default_sets: 3, default_reps: 10, default_wt: 44 },
-      { id: 'l2', name: 'Single-Arm DB Heavy Row', category: 'pull', equipment: 'Dumbbell', focus: 'Lat Thickness & Rhomboids', default_sets: 3, default_reps: 10, default_wt: 45 },
-      { id: 'l3', name: 'KB / DB Skiing Pullovers', category: 'pull', equipment: 'KB/DB', focus: 'Lat & Poling Endurance', default_sets: 3, default_reps: 12, default_wt: 32 },
-      { id: 'l4', name: 'KB Renegade Rows', category: 'pull', equipment: 'Kettlebell', focus: 'Anti-Rotation Back & Core', default_sets: 3, default_reps: 8, default_wt: 32 },
-      { id: 'l5', name: 'DB Incline Prone Rows', category: 'pull', equipment: 'Dumbbell', focus: 'Rear Delts & Mid-Back', default_sets: 3, default_reps: 12, default_wt: 30 },
-      { id: 'l6', name: 'DB / KB Hammer Curls', category: 'pull', equipment: 'Dumbbell/KB', focus: 'Brachialis & Biceps', default_sets: 3, default_reps: 12, default_wt: 25 },
+      // PULL (Upper B / Pull)
+      { id: 'l1', name: 'One-Arm Dumbbell Row', category: 'pull', equipment: 'Dumbbell', focus: 'Lat Thickness', default_sets: 4, default_reps: '8–12', default_wt: 52.5 },
+      { id: 'l2', name: 'Reverse Row (supinated grip)', category: 'pull', equipment: 'Dumbbell', focus: 'Mid-Back & Biceps', default_sets: 4, default_reps: '8–12', default_wt: 52.5 },
+      { id: 'l3', name: 'Dumbbell Pullover', category: 'pull', equipment: 'Dumbbell', focus: 'Lats & Serratus', default_sets: 3, default_reps: '10–12', default_wt: 52.5 },
+      { id: 'l4', name: 'Dumbbell Curl', category: 'pull', equipment: 'Dumbbell', focus: 'Biceps Isolation', default_sets: 3, default_reps: '10–12', default_wt: 25 },
+      { id: 'l5', name: 'Rear Delt Fly', category: 'pull', equipment: 'Dumbbell', focus: 'Rear Delts & Upper Back', default_sets: 3, default_reps: '12–15', default_wt: 35 },
+      { id: 'l6', name: 'Hammer Curl', category: 'pull', equipment: 'Dumbbell', focus: 'Brachialis & Forearms', default_sets: 3, default_reps: '10–12', default_wt: 35 },
 
-      // LEGS (Quads, Hamstrings, Glutes)
-      { id: 'g1', name: 'Double KB Goblet Squat', category: 'legs', equipment: 'Kettlebell', focus: 'Quads & Upper Back Posture', default_sets: 3, default_reps: 10, default_wt: 44 },
-      { id: 'g2', name: 'DB Bulgarian Split Squats', category: 'legs', equipment: 'Dumbbell', focus: 'Unilateral Quad/Glute Drive', default_sets: 3, default_reps: 8, default_wt: 30 },
-      { id: 'g3', name: 'Kettlebell Romanian Deadlift (RDL)', category: 'legs', equipment: 'Kettlebell', focus: 'Hamstrings & Posterior Chain', default_sets: 3, default_reps: 12, default_wt: 52.5 },
-      { id: 'g4', name: 'Single-Leg DB Deadlift', category: 'legs', equipment: 'Dumbbell', focus: 'Balance & Hamstring Isolation', default_sets: 3, default_reps: 10, default_wt: 35 },
-      { id: 'g5', name: 'KB Front Rack Walking Lunges', category: 'legs', equipment: 'Kettlebell', focus: 'Leg Endurance & Core', default_sets: 3, default_reps: 12, default_wt: 32 },
+      // LEGS (Lower)
+      { id: 'g1', name: 'Goblet Squat', category: 'legs', equipment: 'Kettlebell', focus: 'Quads & Upper Posture', default_sets: 4, default_reps: '10–12', default_wt: 50 },
+      { id: 'g2', name: 'Dumbbell Romanian Deadlift', category: 'legs', equipment: 'Dumbbell', focus: 'Hamstrings & Glutes', default_sets: 4, default_reps: '8–12', default_wt: 90 },
+      { id: 'g3', name: 'Bulgarian Split Squat', category: 'legs', equipment: 'Dumbbell', focus: 'Unilateral Quads & Glutes', default_sets: 3, default_reps: '8–10', default_wt: 60 },
+      { id: 'g4', name: 'Hip Thrust', category: 'legs', equipment: 'Dumbbell', focus: 'Glute Power', default_sets: 4, default_reps: '10–12', default_wt: 50 },
+      { id: 'g5', name: 'Dumbbell Calf Raise', category: 'legs', equipment: 'Dumbbell', focus: 'Calves', default_sets: 3, default_reps: '15–20', default_wt: 100 },
 
       // DEDICATED CORE (5-Min Block)
-      { id: 'c1', name: 'Russian Kettlebell Twings / Russian Twists', category: 'core', equipment: 'Kettlebell', focus: 'Rotational Core', default_sets: 3, default_reps: 20, default_wt: 32 },
-      { id: 'c2', name: 'KB Bottoms-Up Carry / Suitcase Carry', category: 'core', equipment: 'Kettlebell', focus: 'Anti-Lateral Flexion Core', default_sets: 3, default_reps: 45, default_wt: 44 },
-      { id: 'c3', name: 'Hollow Body Hold / Floor Leg Raises', category: 'core', equipment: 'Bodyweight', focus: 'Deep Abdominal Wall', default_sets: 3, default_reps: 15, default_wt: 0 },
-      { id: 'c4', name: 'Turkish Get-Up (Single Heavy Rep)', category: 'core', equipment: 'Kettlebell', focus: 'Total Core & Shoulder Stability', default_sets: 2, default_reps: 3, default_wt: 32 }
+      { id: 'c1', name: 'Russian Twist', category: 'core', equipment: 'Dumbbell/Plate', focus: 'Obliques & Core', default_sets: 3, default_reps: '15–20', default_wt: 25 },
+      { id: 'c2', name: 'Leg Raise', category: 'core', equipment: 'Bodyweight', focus: 'Lower Abs', default_sets: 3, default_reps: '10–15', default_wt: 0 }
     ];
 
     let userPrefs = JSON.parse(localStorage.getItem('birkie_exercise_prefs') || '{"favorites":[],"blacklist":[]}');
@@ -177,7 +176,7 @@
       const focus = document.getElementById('workout-focus').value;
       const rowingMins = parseInt(document.getElementById('rowing-time').value);
       
-      // 1. Pick 3 strength movements for the split
+      // 1. Pick 3-4 strength movements for the split matching Sheet 2
       let candidates = EXERCISE_DB.filter(e => !userPrefs.blacklist.includes(e.id) && e.category === focus);
       if (candidates.length === 0) { alert("No available movements for this split (check blacklist)."); return; }
 
@@ -188,7 +187,7 @@
       });
 
       let selectedStrength = [];
-      while (selectedStrength.length < Math.min(3, candidates.length)) {
+      while (selectedStrength.length < Math.min(4, candidates.length)) {
         const ex = weightedPool[Math.floor(Math.random() * weightedPool.length)];
         if (!selectedStrength.some(s => s.id === ex.id)) selectedStrength.push(ex);
       }
@@ -209,21 +208,13 @@
     function getProgressionSuggestion(exId, defaultSets, defaultReps, defaultWt) {
       const history = exerciseHistory[exId];
       if (!history || history.length === 0) {
-        return `${defaultSets} sets x ${defaultReps} reps @ ${defaultWt} lbs <span class="text-xs text-gray-500">(Baseline)</span>`;
+        return `${defaultSets} sets x ${defaultReps} reps @ ${defaultWt} lbs <span class="text-xs text-gray-500">(Sheet 2 Baseline)</span>`;
       }
-      const last = history[history.length - 1]; // { sets, reps, weight }
+      const last = history[history.length - 1];
       
-      // Suggest progressive overload: if last reps were hit, suggest +1 rep or +2.5-5 lbs
-      let suggestedReps = last.reps;
-      let suggestedWt = last.weight;
-      if (last.reps >= 12) {
-        suggestedWt += 5;
-        suggestedReps = 8; // drop reps slightly for heavier weight
-      } else {
-        suggestedReps += 1; // bump rep target by 1
-      }
+      let suggestedWt = last.weight + 2.5; // Progressive overload weight suggestion
 
-      return `<span class="text-accent font-bold">${last.sets}x${last.reps} @ ${last.weight}lbs</span> ➔ <span class="text-highlight">Target: ${last.sets}x${suggestedReps} @ ${suggestedWt}lbs</span>`;
+      return `<span class="text-accent font-bold">${last.sets}x${last.reps} @ ${last.weight}lbs</span> ➔ <span class="text-highlight">Target: Bump Weight to ${suggestedWt}lbs</span>`;
     }
 
     function renderCurrentWorkout() {
@@ -234,11 +225,10 @@
       card.classList.remove('hidden');
       container.innerHTML = '';
 
-      // Render Strength + Core
       const allExs = [...currentWorkout.strength, currentWorkout.core];
       allExs.forEach((ex, index) => {
         const isCore = ex.category === 'core';
-        const badge = isCore ? '<span class="text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">5-MIN CORE BLOCK</span>' : `<span class="text-[9px] bg-gray-800 px-1.5 py-0.5 rounded text-gray-400">#${index+1} Strength</span>`;
+        const badge = isCore ? '<span class="text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">5-MIN CORE BLOCK</span>' : `<span class="text-[9px] bg-gray-800 px-1.5 py-0.5 rounded text-gray-400">#${index+1} Exercise</span>`;
         const suggestionHtml = getProgressionSuggestion(ex.id, ex.default_sets, ex.default_reps, ex.default_wt);
 
         container.innerHTML += `
@@ -247,27 +237,21 @@
               <span class="font-bold text-xs text-gray-100">${ex.name}</span>
               ${badge}
             </div>
-            <div class="text-[11px] text-gray-300">Suggestion: ${suggestionHtml}</div>
+            <div class="text-[11px] text-gray-300">History: ${suggestionHtml}</div>
             <div class="grid grid-cols-3 gap-1 pt-1 text-[11px]">
               <input type="number" id="sets-${ex.id}" value="${ex.default_sets}" placeholder="Sets" class="bg-gray-800 border border-gray-700 rounded p-1 text-center text-gray-200">
-              <input type="number" id="reps-${ex.id}" value="${ex.default_reps}" placeholder="Reps" class="bg-gray-800 border border-gray-700 rounded p-1 text-center text-gray-200">
+              <input type="text" id="reps-${ex.id}" value="${ex.default_reps}" placeholder="Reps" class="bg-gray-800 border border-gray-700 rounded p-1 text-center text-gray-200">
               <input type="number" step="0.5" id="wt-${ex.id}" value="${ex.default_wt}" placeholder="Weight" class="bg-gray-800 border border-gray-700 rounded p-1 text-center text-gray-200">
             </div>
           </div>
         `;
       });
 
-      // Render Rowing Add-on if selected
       if (currentWorkout.rowingTime > 0) {
-        let rowDesc = "";
-        if (currentWorkout.rowingTime <= 20) rowDesc = "20 Min Water Rower: 5 min warm-up, 10 min structured intervals (1 min hard / 1 min steady), 5 min cool-down.";
-        else if (currentWorkout.rowingTime <= 30) rowDesc = "30 Min Water Rower: Moderate steady-state pace (split rate 20-22 spm) focusing on smooth leg drive and double-poling back extension.";
-        else rowDesc = `${currentWorkout.rowingTime} Min Water Rower Endurance: Long aerobic paddle with 500m hard sprints every 10 minutes.`;
-
         rowContainer.innerHTML = `
           <div class="bg-blue-950/40 border border-blue-900/50 p-3 rounded-lg space-y-1">
-            <span class="text-xs font-bold text-accent">🚣 Water Rower Prescription (${currentWorkout.rowingTime} Mins)</span>
-            <p class="text-[11px] text-gray-300">${rowDesc}</p>
+            <span class="text-xs font-bold text-accent">🚣 Water Rower Engine (${currentWorkout.rowingTime} Mins)</span>
+            <p class="text-[11px] text-gray-300">Targeted ${currentWorkout.rowingTime}-minute rowing session focusing on smooth leg drive, posture, and double-poling power transfer.</p>
           </div>
         `;
       } else {
@@ -285,24 +269,22 @@
 
       allExs.forEach(ex => {
         const sets = parseInt(document.getElementById(`sets-${ex.id}`).value) || 3;
-        const reps = parseInt(document.getElementById(`reps-${ex.id}`).value) || 10;
+        const reps = document.getElementById(`reps-${ex.id}`).value;
         const weight = parseFloat(document.getElementById(`wt-${ex.id}`).value) || 0;
 
         sessionLog.performances.push({ name: ex.name, sets, reps, weight });
 
-        // Save to exercise history for future suggestions
         if (!exerciseHistory[ex.id]) exerciseHistory[ex.id] = [];
-        exerciseHistory[ex.id].push({ date: new Date().toLocaleDateString(), sets, reps, weight });
+        exerciseHistory[ex.id].push({ date: new Date().toLocaleDateString(), sets, reps: parseInt(reps) || 10, weight });
       });
 
       localStorage.setItem('birkie_exercise_history', JSON.stringify(exerciseHistory));
 
-      // Save to general completed log
       const history = JSON.parse(localStorage.getItem('birkie_workout_log') || '[]');
       history.unshift(sessionLog);
       localStorage.setItem('birkie_workout_log', JSON.stringify(history));
 
-      alert("Workout logged successfully & progression targets updated!");
+      alert("Workout logged successfully & saved to history!");
       loadCompletedLog();
       switchTab('log');
     }
@@ -351,7 +333,7 @@
                 </button>
               </div>
             </div>
-            <p class="text-[11px] text-gray-400">${ex.focus} — <span class="text-accent">Default: ${ex.default_sets}x${ex.default_reps} @ ${ex.default_wt}lbs</span></p>
+            <p class="text-[11px] text-gray-400">${ex.focus} — <span class="text-accent">Baseline: ${ex.default_sets}x${ex.default_reps} @ ${ex.default_wt}lbs</span></p>
           </div>
         `;
       }).join('');
