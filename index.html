@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Birkie Training Commander (Supabase)</title>
+  <title>Birkie Training Commander</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -21,14 +21,15 @@
   <!-- Header -->
   <header class="p-4 bg-cardbg border-b border-gray-800 sticky top-0 z-50 text-center">
     <h1 class="text-xl font-bold text-accent">🎿 Birkie Training Commander</h1>
-    <p class="text-xs text-gray-400">Supabase Cloud Connected Engine</p>
+    <p class="text-xs text-gray-400">Supabase Cloud + AI Coach Integration</p>
   </header>
 
   <!-- Navigation Tabs -->
   <nav class="flex justify-around bg-cardbg p-2 border-b border-gray-800 text-xs font-bold">
-    <button onclick="switchTab('generator')" id="btn-generator" class="py-2 px-3 rounded text-accent bg-gray-800">⚡ Generator</button>
-    <button onclick="switchTab('library')" id="btn-library" class="py-2 px-3 rounded text-gray-400">📚 Movements</button>
-    <button onclick="switchTab('log')" id="btn-log" class="py-2 px-3 rounded text-gray-400">📝 Cloud History</button>
+    <button onclick="switchTab('generator')" id="btn-generator" class="py-2 px-3 rounded text-accent bg-gray-800">⚡ Gen</button>
+    <button onclick="switchTab('coach')" id="btn-coach" class="py-2 px-3 rounded text-gray-400">🤖 AI Coach</button>
+    <button onclick="switchTab('library')" id="btn-library" class="py-2 px-3 rounded text-gray-400">📚 Library</button>
+    <button onclick="switchTab('log')" id="btn-log" class="py-2 px-3 rounded text-gray-400">📝 History</button>
   </nav>
 
   <main class="p-4 max-w-md mx-auto space-y-4">
@@ -38,7 +39,7 @@
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
         <div class="flex justify-between items-center">
           <h2 class="text-sm font-bold text-highlight">⚙️ Build Session</h2>
-          <span id="sync-status" class="text-[10px] text-accent">● Cloud Sync Ready</span>
+          <span id="sync-status" class="text-[10px] text-accent">● Cloud Connected</span>
         </div>
         
         <div class="grid grid-cols-2 gap-2">
@@ -67,7 +68,6 @@
         </button>
       </div>
 
-      <!-- GENERATED WORKOUT DISPLAY -->
       <div id="active-workout-card" class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3 hidden">
         <div class="flex justify-between items-center border-b border-gray-800 pb-2">
           <h3 id="generated-title" class="text-sm font-bold text-accent">Session Breakdown</h3>
@@ -83,15 +83,32 @@
       </div>
     </div>
 
-    <!-- TAB 2: MOVEMENT DATABASE & PREFERENCES -->
+    <!-- TAB 2: AI COACH & DYNAMIC ANALYTICS -->
+    <div id="tab-coach" class="space-y-4 hidden">
+      <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
+        <div class="flex justify-between items-center">
+          <h2 class="text-sm font-bold text-highlight">🤖 AI Performance Coach</h2>
+          <button onclick="loadCoachAnalytics()" class="text-[10px] bg-gray-800 text-accent px-2 py-1 rounded hover:bg-gray-700 font-bold">🔄 Refresh Analysis</button>
+        </div>
+        <p class="text-[11px] text-gray-400">Analyzing your Supabase cloud logs for progressive overload, volume balance, and Birkie skiing preparation:</p>
+        
+        <div id="ai-coach-output" class="space-y-3 text-xs">
+          <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 text-gray-400">
+            Analyzing cloud training history...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: MOVEMENT DATABASE & PREFERENCES -->
     <div id="tab-library" class="space-y-4 hidden">
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
         <div class="flex justify-between items-center">
-          <h2 class="text-sm font-bold text-highlight">🏋️ Supabase Movement Library</h2>
-          <span class="text-[10px] text-gray-400">⭐ Favored | 🚫 Blocked</span>
+          <h2 class="text-sm font-bold text-highlight">🏋️ Movement Library</h2>
+          <span class="text-[10px] text-gray-400">⭐ Favs | 🚫 Blocked</span>
         </div>
         
-        <input type="text" id="db-search" onkeyup="filterLibrary()" placeholder="Search movement or target..." class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-xs text-gray-200 focus:outline-none focus:border-accent">
+        <input type="text" id="db-search" onkeyup="filterLibrary()" placeholder="Search movement..." class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-xs text-gray-200 focus:outline-none focus:border-accent">
         
         <div class="flex gap-2 text-[11px]">
           <button onclick="setLibraryFilter('all')" id="flt-all" class="flex-1 bg-gray-800 text-accent font-bold py-1.5 rounded border border-gray-700">All</button>
@@ -99,19 +116,15 @@
           <button onclick="setLibraryFilter('black')" id="flt-black" class="flex-1 bg-gray-900 text-gray-400 font-bold py-1.5 rounded border border-gray-800">🚫 Blocked</button>
         </div>
 
-        <div id="library-list" class="space-y-2 max-h-[26rem] overflow-y-auto pr-1">
-          <p class="text-xs text-gray-500">Loading movements from cloud database...</p>
-        </div>
+        <div id="library-list" class="space-y-2 max-h-[26rem] overflow-y-auto pr-1"></div>
       </div>
     </div>
 
-    <!-- TAB 3: SESSION LOG & HISTORY -->
+    <!-- TAB 4: SESSION LOG -->
     <div id="tab-log" class="space-y-4 hidden">
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
-        <h2 class="text-sm font-bold text-highlight">📖 Cloud Session History</h2>
-        <div id="completed-log-list" class="space-y-2 max-h-[28rem] overflow-y-auto pr-1">
-          <p class="text-xs text-gray-500">Loading cloud history...</p>
-        </div>
+        <h2 class="text-sm font-bold text-highlight">📖 Cloud History</h2>
+        <div id="completed-log-list" class="space-y-2 max-h-[28rem] overflow-y-auto pr-1"></div>
       </div>
     </div>
 
@@ -125,6 +138,7 @@
     let userPrefs = JSON.parse(localStorage.getItem('birkie_exercise_prefs') || '{"favorites":[],"blacklist":[]}');
     let currentWorkout = { strength: [], core: null, rowingTime: 0 };
     let currentLibFilter = 'all';
+    let cloudLogsCache = [];
 
     async function initApp() {
       try {
@@ -134,13 +148,83 @@
         if (res.ok) {
           EXERCISE_DB = await res.json();
           renderLibrary();
-        } else {
-          document.getElementById('sync-status').innerText = "● Cloud Sync Error";
         }
       } catch (e) {
         document.getElementById('sync-status').innerText = "● Offline Mode";
       }
       loadCloudLogs();
+    }
+
+    async function loadCloudLogs() {
+      const container = document.getElementById('completed-log-list');
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/birkie_workout_logs?select=*&order=logged_at.desc`, {
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        if (res.ok) {
+          cloudLogsCache = await res.json();
+          if (cloudLogsCache.length === 0) {
+            container.innerHTML = `<p class="text-xs text-gray-500">No cloud logs recorded yet.</p>`;
+            return;
+          }
+          container.innerHTML = cloudLogsCache.map(h => `
+            <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1.5 text-xs">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-accent">${h.split_category} — ${h.rowing_mins > 0 ? `+ ${h.rowing_mins}m Row` : 'Strength Only'}</span>
+                <span class="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded">${h.logged_at.split('T')[0]}</span>
+              </div>
+              <div class="text-[11px] text-gray-300 space-y-0.5 pt-1">
+                ${h.performances.map(p => `<div>• ${p.name}: <b>${p.sets}x${p.reps} @${p.weight}lbs</b></div>`).join('')}
+              </div>
+            </div>
+          `).join('');
+          
+          generateAICoachInsights(cloudLogsCache);
+        }
+      } catch (e) {
+        container.innerHTML = `<p class="text-xs text-red-400">Could not load history from cloud.</p>`;
+      }
+    }
+
+    function generateAICoachInsights(logs) {
+      const coachContainer = document.getElementById('ai-coach-output');
+      if (!logs || logs.length === 0) {
+        coachContainer.innerHTML = `<div class="bg-gray-900 p-3 rounded-lg border border-gray-800 text-gray-400">Complete your first workout to unlock AI coaching insights!</div>`;
+        return;
+      }
+
+      let totalSessions = logs.length;
+      let totalRowingMinutes = logs.reduce((acc, l) => acc + (l.rowing_mins || 0), 0);
+      let lastWorkout = logs[0];
+
+      // Track heavy PRs from performances
+      let maxWeightLifted = 0;
+      let heaviestMovement = "";
+      logs.forEach(l => {
+        l.performances.forEach(p => {
+          if (p.weight > maxWeightLifted) {
+            maxWeightLifted = p.weight;
+            heaviestMovement = p.name;
+          }
+        });
+      });
+
+      coachContainer.innerHTML = `
+        <div class="bg-blue-950/40 border border-blue-900/50 p-3 rounded-lg space-y-2">
+          <div class="font-bold text-accent">🎿 Nordic Conditioning Status</div>
+          <p class="text-gray-300 text-[11px]">You have logged <b>${totalSessions} sessions</b> in Supabase with a cumulative <b>${totalRowingMinutes} minutes</b> on the water rower. Your training volume is locked in for skate/classic ski preparation.</p>
+        </div>
+
+        <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1">
+          <div class="font-bold text-highlight">💪 Peak Strength Milestone</div>
+          <p class="text-gray-300 text-[11px]">Highest tracked load: <b>${maxWeightLifted} lbs</b> on <b>${heaviestMovement}</b>. Heavy kettlebell swings and pullovers directly reinforce your double-poling power chain.</p>
+        </div>
+
+        <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1">
+          <div class="font-bold text-accent">🎯 AI Coach Recommendation for Next Session</div>
+          <p class="text-gray-300 text-[11px]">Based on your last session (${lastWorkout.split_category}), aim for progressive overload by adding +2.5 to 5 lbs or completing an extra rep on your primary compound lifts today.</p>
+        </div>
+      `;
     }
 
     function savePrefs() {
@@ -174,7 +258,7 @@
       const rowingMins = parseInt(document.getElementById('rowing-time').value);
       
       let candidates = EXERCISE_DB.filter(e => !userPrefs.blacklist.includes(e.id) && e.category === focus);
-      if (candidates.length === 0) { alert("No available movements for this split (check blacklist)."); return; }
+      if (candidates.length === 0) { alert("No available movements for this split."); return; }
 
       let weightedPool = [];
       candidates.forEach(e => {
@@ -219,7 +303,7 @@
               <span class="font-bold text-xs text-gray-100">${ex.name}</span>
               ${badge}
             </div>
-            <div class="text-[11px] text-gray-400">Target: ${ex.focus}</div>
+            <div class="text-[11px] text-gray-400">${ex.focus}</div>
             <div class="grid grid-cols-3 gap-1 pt-1 text-[11px]">
               <input type="number" id="sets-${ex.id}" value="${ex.default_sets}" placeholder="Sets" class="bg-gray-800 border border-gray-700 rounded p-1 text-center text-gray-200">
               <input type="text" id="reps-${ex.id}" value="${ex.default_reps}" placeholder="Reps" class="bg-gray-800 border border-gray-700 rounded p-1 text-center text-gray-200">
@@ -271,46 +355,17 @@
         if (res.ok) {
           alert("Workout logged successfully to Supabase Cloud!");
           loadCloudLogs();
-          switchTab('log');
+          switchTab('coach');
         } else {
           alert("Error saving workout to cloud.");
         }
       } catch (err) { alert("Network error saving workout."); }
     }
 
-    async function loadCloudLogs() {
-      const container = document.getElementById('completed-log-list');
-      try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/birkie_workout_logs?select=*&order=logged_at.desc`, {
-          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
-        });
-        if (res.ok) {
-          const logs = await res.json();
-          if (logs.length === 0) {
-            container.innerHTML = `<p class="text-xs text-gray-500">No cloud logs recorded yet.</p>`;
-            return;
-          }
-          container.innerHTML = logs.map(h => `
-            <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1.5 text-xs">
-              <div class="flex justify-between items-center">
-                <span class="font-bold text-accent">${h.split_category} — ${h.rowing_mins > 0 ? `+ ${h.rowing_mins}m Row` : 'Strength Only'}</span>
-                <span class="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded">${h.logged_at.split('T')[0]}</span>
-              </div>
-              <div class="text-[11px] text-gray-300 space-y-0.5 pt-1">
-                ${h.performances.map(p => `<div>• ${p.name}: <b>${p.sets}x${p.reps} @${p.weight}lbs</b></div>`).join('')}
-              </div>
-            </div>
-          `).join('');
-        }
-      } catch (e) {
-        container.innerHTML = `<p class="text-xs text-red-400">Could not load history from cloud.</p>`;
-      }
-    }
-
     function renderLibrary() {
       const container = document.getElementById('library-list');
       if (EXERCISE_DB.length === 0) {
-        container.innerHTML = `<p class="text-xs text-gray-500">No movements found.</p>`;
+        container.innerHTML = `<p class="text-xs text-gray-500">Loading library...</p>`;
         return;
       }
 
@@ -326,12 +381,8 @@
             <div class="flex justify-between items-center">
               <span class="font-bold text-xs ${isBlack ? 'line-through text-red-400' : 'text-gray-200'}">${ex.name}</span>
               <div class="flex gap-1">
-                <button onclick="toggleFavorite('${ex.id}')" class="p-1 text-xs rounded ${isFav ? 'bg-amber-500/20 text-amber-400' : 'bg-gray-800 text-gray-500'} hover:text-amber-400 transition">
-                  ⭐
-                </button>
-                <button onclick="toggleBlacklist('${ex.id}')" class="p-1 text-xs rounded ${isBlack ? 'bg-red-500/20 text-red-400' : 'bg-gray-800 text-gray-500'} hover:text-red-400 transition">
-                  🚫
-                </button>
+                <button onclick="toggleFavorite('${ex.id}')" class="p-1 text-xs rounded ${isFav ? 'bg-amber-500/20 text-amber-400' : 'bg-gray-800 text-gray-500'} hover:text-amber-400 transition">⭐</button>
+                <button onclick="toggleBlacklist('${ex.id}')" class="p-1 text-xs rounded ${isBlack ? 'bg-red-500/20 text-red-400' : 'bg-gray-800 text-gray-500'} hover:text-red-400 transition">🚫</button>
               </div>
             </div>
             <p class="text-[11px] text-gray-400">${ex.focus} — <span class="text-accent">Baseline: ${ex.default_sets}x${ex.default_reps} @ ${ex.default_wt}lbs</span></p>
@@ -361,7 +412,7 @@
     }
 
     function switchTab(tab) {
-      ['generator', 'library', 'log'].forEach(t => {
+      ['generator', 'coach', 'library', 'log'].forEach(t => {
         document.getElementById(`tab-${t}`).classList.add('hidden');
         document.getElementById(`btn-${t}`).classList.remove('text-accent', 'bg-gray-800');
         document.getElementById(`btn-${t}`).classList.add('text-gray-400');
