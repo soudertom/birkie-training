@@ -21,7 +21,7 @@
   <!-- Header -->
   <header class="p-4 bg-cardbg border-b border-gray-800 sticky top-0 z-50 text-center">
     <h1 class="text-xl font-bold text-accent">🎿 Birkie Training Commander</h1>
-    <p class="text-xs text-gray-400">Supabase Cloud + AI Coach Integration</p>
+    <p class="text-xs text-gray-400">Sheet 2 Splits + Cloud AI Coach</p>
   </header>
 
   <!-- Navigation Tabs -->
@@ -39,7 +39,7 @@
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
         <div class="flex justify-between items-center">
           <h2 class="text-sm font-bold text-highlight">⚙️ Build Session</h2>
-          <span id="sync-status" class="text-[10px] text-accent">● Cloud Connected</span>
+          <span id="sync-status" class="text-[10px] text-accent">● Cloud Sync Active</span>
         </div>
         
         <div class="grid grid-cols-2 gap-2">
@@ -88,13 +88,13 @@
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
         <div class="flex justify-between items-center">
           <h2 class="text-sm font-bold text-highlight">🤖 AI Performance Coach</h2>
-          <button onclick="loadCoachAnalytics()" class="text-[10px] bg-gray-800 text-accent px-2 py-1 rounded hover:bg-gray-700 font-bold">🔄 Refresh Analysis</button>
+          <button onclick="loadCloudLogs()" class="text-[10px] bg-gray-800 text-accent px-2 py-1 rounded hover:bg-gray-700 font-bold">🔄 Refresh Analysis</button>
         </div>
-        <p class="text-[11px] text-gray-400">Analyzing your Supabase cloud logs for progressive overload, volume balance, and Birkie skiing preparation:</p>
+        <p class="text-[11px] text-gray-400">Analyzing your Supabase cloud logs for progressive overload and Birkie conditioning:</p>
         
         <div id="ai-coach-output" class="space-y-3 text-xs">
           <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 text-gray-400">
-            Analyzing cloud training history...
+            Loading analytics...
           </div>
         </div>
       </div>
@@ -134,25 +134,37 @@
     const SUPABASE_URL = 'https://crtvkqpaajyfubdrofwx.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_VM-b9PU3kKoGwbjF8w2qxQ_ujdrkuSU';
 
-    let EXERCISE_DB = [];
+    // INSTANT EMBEDDED SHEET 2 MOVEMENT LIBRARY
+    const EXERCISE_DB = [
+      { id: 'p1', name: 'Flat Dumbbell Press', category: 'push', equipment: 'Dumbbell', focus: 'Chest & Triceps', default_sets: 4, default_reps: '8–12', default_wt: 52.5 },
+      { id: 'p2', name: 'Incline Dumbbell Fly', category: 'push', equipment: 'Dumbbell', focus: 'Upper Chest Isolation', default_sets: 4, default_reps: '8–12', default_wt: 30 },
+      { id: 'p3', name: 'Arnold Press', category: 'push', equipment: 'Dumbbell', focus: 'Shoulders & Stability', default_sets: 3, default_reps: '10–12', default_wt: 30 },
+      { id: 'p4', name: 'Dumbbell Kick Back', category: 'push', equipment: 'Dumbbell', focus: 'Triceps Isolation', default_sets: 3, default_reps: '10–12', default_wt: 35 },
+      { id: 'p5', name: 'Lateral Raise', category: 'push', equipment: 'Dumbbell', focus: 'Side Delts', default_sets: 3, default_reps: '12–15', default_wt: 20 },
+      { id: 'p6', name: 'Overhead Tricep Extension', category: 'push', equipment: 'Dumbbell', focus: 'Triceps Long Head', default_sets: 3, default_reps: '10–12', default_wt: 52.5 },
+      { id: 'l1', name: 'One-Arm Dumbbell Row', category: 'pull', equipment: 'Dumbbell', focus: 'Lat Thickness', default_sets: 4, default_reps: '8–12', default_wt: 52.5 },
+      { id: 'l2', name: 'Reverse Row (supinated grip)', category: 'pull', equipment: 'Dumbbell', focus: 'Mid-Back & Biceps', default_sets: 4, default_reps: '8–12', default_wt: 52.5 },
+      { id: 'l3', name: 'Dumbbell Pullover', category: 'pull', equipment: 'Dumbbell', focus: 'Lats & Serratus', default_sets: 3, default_reps: '10–12', default_wt: 52.5 },
+      { id: 'l4', name: 'Dumbbell Curl', category: 'pull', equipment: 'Dumbbell', focus: 'Biceps Isolation', default_sets: 3, default_reps: '10–12', default_wt: 25 },
+      { id: 'l5', name: 'Rear Delt Fly', category: 'pull', equipment: 'Dumbbell', focus: 'Rear Delts & Upper Back', default_sets: 3, default_reps: '12–15', default_wt: 35 },
+      { id: 'l6', name: 'Hammer Curl', category: 'pull', equipment: 'Dumbbell', focus: 'Brachialis & Forearms', default_sets: 3, default_reps: '10–12', default_wt: 35 },
+      { id: 'g1', name: 'Goblet Squat', category: 'legs', equipment: 'Kettlebell', focus: 'Quads & Upper Posture', default_sets: 4, default_reps: '10–12', default_wt: 50 },
+      { id: 'g2', name: 'Dumbbell Romanian Deadlift', category: 'legs', equipment: 'Dumbbell', focus: 'Hamstrings & Glutes', default_sets: 4, default_reps: '8–12', default_wt: 90 },
+      { id: 'g3', name: 'Bulgarian Split Squat', category: 'legs', equipment: 'Dumbbell', focus: 'Unilateral Quads & Glutes', default_sets: 3, default_reps: '8–10', default_wt: 60 },
+      { id: 'g4', name: 'Hip Thrust', category: 'legs', equipment: 'Dumbbell', focus: 'Glute Power', default_sets: 4, default_reps: '10–12', default_wt: 50 },
+      { id: 'g5', name: 'Dumbbell Calf Raise', category: 'legs', equipment: 'Dumbbell', focus: 'Calves', default_sets: 3, default_reps: '15–20', default_wt: 100 },
+      { id: 'c1', name: 'Russian Twist', category: 'core', equipment: 'Dumbbell/Plate', focus: 'Obliques & Core', default_sets: 3, default_reps: '15–20', default_wt: 25 },
+      { id: 'c2', name: 'Leg Raise', category: 'core', equipment: 'Bodyweight', focus: 'Lower Abs', default_sets: 3, default_reps: '10–15', default_wt: 0 }
+    ];
+
     let userPrefs = JSON.parse(localStorage.getItem('birkie_exercise_prefs') || '{"favorites":[],"blacklist":[]}');
     let currentWorkout = { strength: [], core: null, rowingTime: 0 };
     let currentLibFilter = 'all';
     let cloudLogsCache = [];
 
     async function initApp() {
-      try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/birkie_movements?select=*`, {
-          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
-        });
-        if (res.ok) {
-          EXERCISE_DB = await res.json();
-          renderLibrary();
-        }
-      } catch (e) {
-        document.getElementById('sync-status').innerText = "● Offline Mode";
-      }
-      loadCloudLogs();
+      renderLibrary();
+      await loadCloudLogs();
     }
 
     async function loadCloudLogs() {
@@ -165,24 +177,25 @@
           cloudLogsCache = await res.json();
           if (cloudLogsCache.length === 0) {
             container.innerHTML = `<p class="text-xs text-gray-500">No cloud logs recorded yet.</p>`;
-            return;
+          } else {
+            container.innerHTML = cloudLogsCache.map(h => `
+              <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1.5 text-xs">
+                <div class="flex justify-between items-center">
+                  <span class="font-bold text-accent">${h.split_category} — ${h.rowing_mins > 0 ? `+ ${h.rowing_mins}m Row` : 'Strength Only'}</span>
+                  <span class="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded">${h.logged_at.split('T')[0]}</span>
+                </div>
+                <div class="text-[11px] text-gray-300 space-y-0.5 pt-1">
+                  ${h.performances.map(p => `<div>• ${p.name}: <b>${p.sets}x${p.reps} @${p.weight}lbs</b></div>`).join('')}
+                </div>
+              </div>
+            `).join('');
           }
-          container.innerHTML = cloudLogsCache.map(h => `
-            <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1.5 text-xs">
-              <div class="flex justify-between items-center">
-                <span class="font-bold text-accent">${h.split_category} — ${h.rowing_mins > 0 ? `+ ${h.rowing_mins}m Row` : 'Strength Only'}</span>
-                <span class="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded">${h.logged_at.split('T')[0]}</span>
-              </div>
-              <div class="text-[11px] text-gray-300 space-y-0.5 pt-1">
-                ${h.performances.map(p => `<div>• ${p.name}: <b>${p.sets}x${p.reps} @${p.weight}lbs</b></div>`).join('')}
-              </div>
-            </div>
-          `).join('');
-          
           generateAICoachInsights(cloudLogsCache);
+        } else {
+          container.innerHTML = `<p class="text-xs text-red-400">Failed to fetch cloud logs.</p>`;
         }
       } catch (e) {
-        container.innerHTML = `<p class="text-xs text-red-400">Could not load history from cloud.</p>`;
+        container.innerHTML = `<p class="text-xs text-red-400">Cloud network error.</p>`;
       }
     }
 
@@ -197,7 +210,6 @@
       let totalRowingMinutes = logs.reduce((acc, l) => acc + (l.rowing_mins || 0), 0);
       let lastWorkout = logs[0];
 
-      // Track heavy PRs from performances
       let maxWeightLifted = 0;
       let heaviestMovement = "";
       logs.forEach(l => {
@@ -212,17 +224,17 @@
       coachContainer.innerHTML = `
         <div class="bg-blue-950/40 border border-blue-900/50 p-3 rounded-lg space-y-2">
           <div class="font-bold text-accent">🎿 Nordic Conditioning Status</div>
-          <p class="text-gray-300 text-[11px]">You have logged <b>${totalSessions} sessions</b> in Supabase with a cumulative <b>${totalRowingMinutes} minutes</b> on the water rower. Your training volume is locked in for skate/classic ski preparation.</p>
+          <p class="text-gray-300 text-[11px]">You have logged <b>${totalSessions} sessions</b> in Supabase with a cumulative <b>${totalRowingMinutes} minutes</b> on the water rower.</p>
         </div>
 
         <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1">
           <div class="font-bold text-highlight">💪 Peak Strength Milestone</div>
-          <p class="text-gray-300 text-[11px]">Highest tracked load: <b>${maxWeightLifted} lbs</b> on <b>${heaviestMovement}</b>. Heavy kettlebell swings and pullovers directly reinforce your double-poling power chain.</p>
+          <p class="text-gray-300 text-[11px]">Highest tracked load: <b>${maxWeightLifted} lbs</b> on <b>${heaviestMovement}</b>.</p>
         </div>
 
         <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-1">
-          <div class="font-bold text-accent">🎯 AI Coach Recommendation for Next Session</div>
-          <p class="text-gray-300 text-[11px]">Based on your last session (${lastWorkout.split_category}), aim for progressive overload by adding +2.5 to 5 lbs or completing an extra rep on your primary compound lifts today.</p>
+          <div class="font-bold text-accent">🎯 AI Coach Recommendation</div>
+          <p class="text-gray-300 text-[11px]">Last session was <b>${lastWorkout.split_category}</b>. Aim for progressive overload today by bumping weight or reps.</p>
         </div>
       `;
     }
@@ -354,7 +366,7 @@
 
         if (res.ok) {
           alert("Workout logged successfully to Supabase Cloud!");
-          loadCloudLogs();
+          await loadCloudLogs();
           switchTab('coach');
         } else {
           alert("Error saving workout to cloud.");
@@ -364,11 +376,6 @@
 
     function renderLibrary() {
       const container = document.getElementById('library-list');
-      if (EXERCISE_DB.length === 0) {
-        container.innerHTML = `<p class="text-xs text-gray-500">Loading library...</p>`;
-        return;
-      }
-
       container.innerHTML = EXERCISE_DB.map(ex => {
         const isFav = userPrefs.favorites.includes(ex.id);
         const isBlack = userPrefs.blacklist.includes(ex.id);
