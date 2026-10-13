@@ -21,7 +21,7 @@
   <!-- Header -->
   <header class="p-4 bg-cardbg border-b border-gray-800 sticky top-0 z-50 text-center">
     <h1 class="text-xl font-bold text-accent">🎿 Birkie Training Commander</h1>
-    <p class="text-xs text-gray-400">Interactive Circuit + Dual Core + Cloud Sync</p>
+    <p class="text-xs text-gray-400">Interactive Circuit + Dual Core + Pause Feature</p>
   </header>
 
   <!-- Navigation Tabs -->
@@ -93,11 +93,14 @@
         </button>
       </div>
 
-      <!-- LIVE INTERACTIVE CIRCUIT PLAYER (SET BY SET) -->
+      <!-- LIVE INTERACTIVE CIRCUIT PLAYER (SET BY SET WITH PAUSE) -->
       <div id="interactive-player-card" class="bg-cardbg p-5 rounded-xl border border-gray-800 space-y-4 hidden">
         <div class="flex justify-between items-center border-b border-gray-800 pb-2">
           <span id="circuit-progress-badge" class="text-[10px] bg-accent/20 text-accent px-2 py-0.5 rounded font-bold">Step 1 of X</span>
-          <button onclick="exitInteractiveSession()" class="text-[10px] text-red-400 bg-red-950/40 px-2 py-0.5 rounded border border-red-900">Abort Session</button>
+          <div class="flex gap-2">
+            <button onclick="togglePauseSession()" id="btn-pause-resume" class="text-[10px] text-amber-300 bg-amber-950/40 px-2 py-0.5 rounded border border-amber-900 font-bold">⏸️ Pause</button>
+            <button onclick="exitInteractiveSession()" class="text-[10px] text-red-400 bg-red-950/40 px-2 py-0.5 rounded border border-red-900">Abort</button>
+          </div>
         </div>
 
         <!-- ACTIVE STEP VIEW -->
@@ -107,7 +110,7 @@
 
         <!-- ACTION BUTTONS -->
         <div id="circuit-action-area" class="space-y-2 pt-2">
-          <!-- Dynamically populated buttons (Next Set, Start Rest Timer, etc.) -->
+          <!-- Dynamically populated buttons -->
         </div>
       </div>
 
@@ -131,14 +134,8 @@
       <div class="bg-cardbg p-4 rounded-xl border border-gray-800 space-y-3">
         <div class="flex justify-between items-center">
           <h2 class="text-sm font-bold text-highlight">🏋️ Movement Library</h2>
-          <span class="text-[10px] text-gray-400">⭐ Favs | 🚫 Blocked</span>
         </div>
         <input type="text" id="db-search" onkeyup="filterLibrary()" placeholder="Search movement..." class="w-full bg-gray-900 border border-gray-800 rounded-lg p-2 text-xs text-gray-200 focus:outline-none focus:border-accent">
-        <div class="flex gap-2 text-[11px]">
-          <button onclick="setLibraryFilter('all')" id="flt-all" class="flex-1 bg-gray-800 text-accent font-bold py-1.5 rounded border border-gray-700">All</button>
-          <button onclick="setLibraryFilter('fav')" id="flt-fav" class="flex-1 bg-gray-900 text-gray-400 font-bold py-1.5 rounded border border-gray-800">⭐ Favs</button>
-          <button onclick="setLibraryFilter('black')" id="flt-black" class="flex-1 bg-gray-900 text-gray-400 font-bold py-1.5 rounded border border-gray-800">🚫 Blocked</button>
-        </div>
         <div id="library-list" class="space-y-2 max-h-[26rem] overflow-y-auto pr-1"></div>
       </div>
     </div>
@@ -187,6 +184,8 @@
     let circuitSteps = [];
     let currentStepIndex = 0;
     let timerInterval = null;
+    let isPaused = false;
+    let currentTimeLeft = 0;
     let cloudLogsCache = [];
     let suggestedSplit = 'push';
 
@@ -274,14 +273,14 @@
       const focus = document.getElementById('workout-focus').value;
       const rowingMins = parseInt(document.getElementById('rowing-time').value);
       
-      let candidates = EXERCISE_DB.filter(e => !userPrefs.blacklist.includes(e.id) && e.category === focus);
+      let candidates = EXERCISE_DB.filter(e => e.category === focus);
       let selectedStrength = [];
       while (selectedStrength.length < Math.min(4, candidates.length)) {
         const ex = candidates[Math.floor(Math.random() * candidates.length)];
         if (!selectedStrength.some(s => s.id === ex.id)) selectedStrength.push(ex);
       }
 
-      let coreCandidates = EXERCISE_DB.filter(e => !userPrefs.blacklist.includes(e.id) && e.category === 'core');
+      let coreCandidates = EXERCISE_DB.filter(e => e.category === 'core');
       let selectedCore = [];
       while (selectedCore.length < Math.min(2, coreCandidates.length)) {
         const cEx = coreCandidates[Math.floor(Math.random() * coreCandidates.length)];
@@ -290,7 +289,6 @@
 
       currentWorkout = { strength: selectedStrength, core: selectedCore, rowingTime: rowingMins };
 
-      // Render Preview
       const previewList = document.getElementById('exercise-preview-list');
       previewList.innerHTML = [...selectedStrength, ...selectedCore].map((ex, i) => `
         <div class="bg-gray-900 p-2 rounded border border-gray-800 text-xs flex justify-between">
@@ -302,7 +300,6 @@
       document.getElementById('active-workout-card').classList.remove('hidden');
     }
 
-    // BUILD CIRCUIT STEPS: Ex1 Set 1 -> Rest 30s -> Ex1 Set 2 -> ... -> 2 Min Row -> Ex2 Set 1 -> ...
     function startInteractiveSession() {
       circuitSteps = [];
       const allExs = [...currentWorkout.strength, ...currentWorkout.core];
@@ -321,17 +318,18 @@
             weight: ex.default_wt
           });
 
-          // Rest 30 seconds after each set (unless it's the very last set of the last exercise)
-          circuitSteps.push({ type: 'rest', duration: 30, label: 'Rest Between Sets' });
+          if (s < sets || exIdx < allExs.length - 1) {
+            circuitSteps.push({ type: 'rest', duration: 30, label: 'Rest Between Sets' });
+          }
         }
 
-        // Add 2-minute water rower transition between exercise changes
         if (exIdx < allExs.length - 1) {
           circuitSteps.push({ type: 'row', duration: 120, label: 'Transition Row (Water Rower)' });
         }
       });
 
       currentStepIndex = 0;
+      isPaused = false;
       document.getElementById('generator-controls').classList.add('hidden');
       document.getElementById('active-workout-card').classList.add('hidden');
       document.getElementById('smart-suggestion-banner').classList.add('hidden');
@@ -349,6 +347,7 @@
       const step = circuitSteps[currentStepIndex];
 
       if (step.type === 'exercise') {
+        clearInterval(timerInterval);
         display.innerHTML = `
           <span class="text-[10px] bg-gray-800 text-highlight px-2 py-0.5 rounded font-bold uppercase">${step.focus}</span>
           <h2 class="text-lg font-bold text-accent mt-2">${step.name}</h2>
@@ -379,24 +378,37 @@
       }
     }
 
+    function togglePauseSession() {
+      isPaused = !isPaused;
+      const btn = document.getElementById('btn-pause-resume');
+      if (isPaused) {
+        btn.innerText = "▶️ Resume";
+        btn.className = "text-[10px] text-emerald-300 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-900 font-bold";
+      } else {
+        btn.innerText = "⏸️ Pause";
+        btn.className = "text-[10px] text-amber-300 bg-amber-950/40 px-2 py-0.5 rounded border border-amber-900 font-bold";
+      }
+    }
+
     function startTimer(seconds) {
       clearInterval(timerInterval);
-      let timeLeft = seconds;
+      currentTimeLeft = seconds;
       const timerEl = document.getElementById('countdown-timer');
 
       timerInterval = setInterval(() => {
-        timeLeft--;
-        if (timerEl) timerEl.innerText = timeLeft + 's';
-        if (timeLeft <= 0) {
-          clearInterval(timerInterval);
-          advanceStep();
+        if (!isPaused) {
+          currentTimeLeft--;
+          if (timerEl) timerEl.innerText = currentTimeLeft + 's';
+          if (currentTimeLeft <= 0) {
+            clearInterval(timerInterval);
+            advanceStep();
+          }
         }
       }, 1000);
     }
 
     function advanceStep() {
       clearInterval(timerInterval);
-      // Save current input values if it was an exercise step
       const repInput = document.getElementById('live-reps');
       const wtInput = document.getElementById('live-wt');
       if (repInput && wtInput && circuitSteps[currentStepIndex].type === 'exercise') {
@@ -419,17 +431,17 @@
       circuitSteps.forEach(s => {
         if (s.type === 'exercise') {
           if (!performancesMap[s.name]) {
-            performancesMap[s.name] = { name: s.name, sets: 0, reps: s.reps, weight: s.weight };
+            performancesMap[s.name] = { name: s.name, sets: 0, reps: String(s.reps), weight: Number(s.weight) };
           }
           performancesMap[s.name].sets++;
-          performancesMap[s.name].reps = s.reps;
-          performancesMap[s.name].weight = s.weight;
+          performancesMap[s.name].reps = String(s.reps);
+          performancesMap[s.name].weight = Number(s.weight);
         }
       });
 
       const payload = {
-        split_category: document.getElementById('workout-focus').value.toUpperCase(),
-        rowing_mins: parseInt(document.getElementById('rowing-time').value) || 0,
+        split_category: String(document.getElementById('workout-focus').value).toUpperCase(),
+        rowing_mins: Number(document.getElementById('rowing-time').value) || 0,
         performances: Object.values(performancesMap)
       };
 
@@ -453,9 +465,12 @@
           await loadCloudLogs();
           switchTab('coach');
         } else {
-          alert("Error logging workout to cloud.");
+          const errText = await res.text();
+          alert("Error logging workout to cloud: " + errText);
         }
-      } catch (e) { alert("Network error saving workout."); }
+      } catch (e) { 
+        alert("Network error saving workout: " + e.message); 
+      }
     }
 
     function exitInteractiveSession() {
@@ -471,22 +486,13 @@
       const container = document.getElementById('library-list');
       if (!container) return;
       container.innerHTML = EXERCISE_DB.map(ex => `
-        <div class="bg-gray-900 p-2.5 rounded-lg border border-gray-800 space-y-1 lib-item" data-search="${ex.name.toLowerCase()} ${ex.category} ${ex.focus.toLowerCase()}">
+        <div class="bg-gray-900 p-2.5 rounded-lg border border-gray-800 space-y-1 lib-item" data-search="${ex.name.toLowerCase()} ${ex.category}">
           <div class="flex justify-between items-center">
             <span class="font-bold text-xs text-gray-200">${ex.name}</span>
           </div>
           <p class="text-[11px] text-gray-400">${ex.focus} — <span class="text-accent">Baseline: ${ex.default_sets}x${ex.default_reps} @ ${ex.default_wt}lbs</span></p>
         </div>
       `).join('');
-    }
-
-    function setLibraryFilter(filter) {
-      currentLibFilter = filter;
-      ['all', 'fav', 'black'].forEach(f => {
-        const btn = document.getElementById(`flt-${f}`);
-        if (btn) btn.className = f === filter ? "flex-1 bg-gray-800 text-accent font-bold py-1.5 rounded border border-gray-700" : "flex-1 bg-gray-900 text-gray-400 font-bold py-1.5 rounded border border-gray-800";
-      });
-      renderLibrary();
     }
 
     function filterLibrary() {
