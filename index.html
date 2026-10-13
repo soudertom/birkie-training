@@ -104,14 +104,10 @@
         </div>
 
         <!-- ACTIVE STEP VIEW -->
-        <div id="step-display-area" class="space-y-3 text-center py-2">
-          <!-- Dynamically populated step content -->
-        </div>
+        <div id="step-display-area" class="space-y-3 text-center py-2"></div>
 
         <!-- ACTION BUTTONS -->
-        <div id="circuit-action-area" class="space-y-2 pt-2">
-          <!-- Dynamically populated buttons -->
-        </div>
+        <div id="circuit-action-area" class="space-y-2 pt-2"></div>
       </div>
 
     </div>
@@ -196,6 +192,7 @@
 
     async function loadCloudLogs() {
       const container = document.getElementById('completed-log-list');
+      if (container) container.innerHTML = `<p class="text-xs text-gray-500">Syncing with cloud...</p>`;
       try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/birkie_workout_logs?select=*&order=logged_at.desc`, {
           headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
@@ -218,8 +215,13 @@
           }
           generateAICoachInsights(cloudLogsCache);
           calculateSundayToSundaySuggestion(cloudLogsCache);
+        } else {
+          const errText = await res.text();
+          if (container) container.innerHTML = `<p class="text-xs text-red-400">Failed to load history: ${errText}</p>`;
         }
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        if (container) container.innerHTML = `<p class="text-xs text-red-400">Network error: ${e.message}</p>`;
+      }
     }
 
     function calculateSundayToSundaySuggestion(logs) {
@@ -463,7 +465,7 @@
           document.getElementById('generator-controls').classList.remove('hidden');
           document.getElementById('smart-suggestion-banner').classList.remove('hidden');
           await loadCloudLogs();
-          switchTab('coach');
+          switchTab('log');
         } else {
           const errText = await res.text();
           alert("Error logging workout to cloud: " + errText);
